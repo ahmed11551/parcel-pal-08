@@ -196,10 +196,10 @@ export default function CreateTaskPage() {
                       </>
                     ) : (
                       <>
-                        <Camera className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                        <p className="text-muted-foreground">
-                          Нажмите, чтобы загрузить фото
-                        </p>
+                    <Camera className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                    <p className="text-muted-foreground">
+                      Нажмите, чтобы загрузить фото
+                    </p>
                       </>
                     )}
                   </label>
@@ -220,7 +220,7 @@ export default function CreateTaskPage() {
                           </button>
                         </div>
                       ))}
-                    </div>
+                  </div>
                   )}
                 </div>
 
@@ -480,8 +480,8 @@ export default function CreateTaskPage() {
                     </>
                   ) : (
                     <>
-                      Опубликовать задание
-                      <ChevronRight className="w-4 h-4" />
+                  Опубликовать задание
+                  <ChevronRight className="w-4 h-4" />
                     </>
                   )}
                 </Button>

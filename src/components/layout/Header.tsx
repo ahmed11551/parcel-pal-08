@@ -41,10 +41,10 @@ export function Header() {
             <>
               <Link to="/orders" className="text-muted-foreground hover:text-foreground transition-colors font-medium">
                 Мои заказы
-              </Link>
+          </Link>
               <Link to="/create-task" className="text-muted-foreground hover:text-foreground transition-colors font-medium">
                 Создать задание
-              </Link>
+          </Link>
             </>
           )}
         </div>
@@ -77,12 +77,12 @@ export function Header() {
             </DropdownMenu>
           ) : (
             <>
-              <Button variant="ghost" asChild>
-                <Link to="/login">Войти</Link>
-              </Button>
-              <Button asChild>
-                <Link to="/register">Регистрация</Link>
-              </Button>
+          <Button variant="ghost" asChild>
+            <Link to="/login">Войти</Link>
+          </Button>
+          <Button asChild>
+            <Link to="/register">Регистрация</Link>
+          </Button>
             </>
           )}
         </div>
@@ -115,21 +115,21 @@ export function Header() {
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   Мои заказы
-                </Link>
-                <Link
+            </Link>
+            <Link
                   to="/create-task"
-                  className="text-muted-foreground hover:text-foreground transition-colors font-medium py-2"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
+              className="text-muted-foreground hover:text-foreground transition-colors font-medium py-2"
+              onClick={() => setMobileMenuOpen(false)}
+            >
                   Создать задание
-                </Link>
-                <Link
+            </Link>
+            <Link
                   to="/profile"
-                  className="text-muted-foreground hover:text-foreground transition-colors font-medium py-2"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
+              className="text-muted-foreground hover:text-foreground transition-colors font-medium py-2"
+              onClick={() => setMobileMenuOpen(false)}
+            >
                   Профиль
-                </Link>
+            </Link>
               </>
             )}
             <div className="flex flex-col gap-2 pt-4 border-t border-border">
@@ -140,12 +140,12 @@ export function Header() {
                 </Button>
               ) : (
                 <>
-                  <Button variant="outline" asChild className="w-full">
-                    <Link to="/login">Войти</Link>
-                  </Button>
-                  <Button asChild className="w-full">
-                    <Link to="/register">Регистрация</Link>
-                  </Button>
+              <Button variant="outline" asChild className="w-full">
+                <Link to="/login">Войти</Link>
+              </Button>
+              <Button asChild className="w-full">
+                <Link to="/register">Регистрация</Link>
+              </Button>
                 </>
               )}
             </div>

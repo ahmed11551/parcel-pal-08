@@ -181,14 +181,14 @@ export default function TasksPage() {
                 <p className="text-muted-foreground">Задания не найдены</p>
               </div>
             ) : (
-              <div className="grid gap-6">
+            <div className="grid gap-6">
                 {tasks.map((task: any) => (
                 <Link
                   key={task.id}
                   to={`/tasks/${task.id}`}
-                    className="group bg-card p-6 rounded-2xl shadow-sm hover:shadow-md transition-all duration-300"
-                  >
-                    <div className="flex flex-col lg:flex-row gap-6">
+                  className="group bg-card p-6 rounded-2xl shadow-sm hover:shadow-md transition-all duration-300"
+                >
+                  <div className="flex flex-col lg:flex-row gap-6">
                       {/* Photo */}
                       <div className="w-24 h-24 bg-primary-light rounded-xl flex items-center justify-center flex-shrink-0 overflow-hidden">
                         {task.photos && task.photos.length > 0 ? (
@@ -200,7 +200,7 @@ export default function TasksPage() {
                         ) : (
                           <Package className="w-12 h-12 text-muted-foreground" />
                         )}
-                      </div>
+                    </div>
 
                     {/* Content */}
                     <div className="flex-1 min-w-0">
@@ -251,13 +251,13 @@ export default function TasksPage() {
                           {sizeLabels[task.size] || task.size}
                         </div>
                         {task.sender && (
-                          <div className="flex items-center gap-2">
-                            <div className="w-6 h-6 gradient-hero rounded-full flex items-center justify-center text-xs text-primary-foreground font-bold">
+                        <div className="flex items-center gap-2">
+                          <div className="w-6 h-6 gradient-hero rounded-full flex items-center justify-center text-xs text-primary-foreground font-bold">
                               {task.sender.name?.[0] || "?"}
-                            </div>
+                          </div>
                             <span className="text-foreground">{task.sender.name || "Пользователь"}</span>
-                            <div className="flex items-center gap-1">
-                              <Star className="w-4 h-4 fill-secondary text-secondary" />
+                          <div className="flex items-center gap-1">
+                            <Star className="w-4 h-4 fill-secondary text-secondary" />
                               <span className="text-foreground font-medium">{task.sender.rating?.toFixed(1) || "0.0"}</span>
                             </div>
                           </div>
@@ -266,8 +266,8 @@ export default function TasksPage() {
                     </div>
                   </div>
                 </Link>
-                ))}
-              </div>
+              ))}
+            </div>
             )}
           </div>
         </section>
