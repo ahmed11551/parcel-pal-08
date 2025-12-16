@@ -9,11 +9,15 @@ import {
   ArrowRight,
   Filter,
   Search,
-  Plane
+  Plane,
+  Loader2
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { tasksAPI } from "@/lib/api";
+import { toast } from "sonner";
 
-// Mock data for tasks
+// Mock data for tasks (fallback)
 const mockTasks = [
   {
     id: 1,
@@ -82,6 +86,27 @@ const sizeLabels: Record<string, string> = {
 export default function TasksPage() {
   const [searchFrom, setSearchFrom] = useState("");
   const [searchTo, setSearchTo] = useState("");
+  const [filters, setFilters] = useState<{ fromAirport?: string; toAirport?: string }>({});
+
+  const { data, isLoading, error, refetch } = useQuery({
+    queryKey: ['tasks', filters],
+    queryFn: () => tasksAPI.getAll(filters),
+  });
+
+  const tasks = data?.data?.tasks || [];
+
+  useEffect(() => {
+    if (error) {
+      toast.error("Ошибка при загрузке заданий");
+    }
+  }, [error]);
+
+  const handleSearch = () => {
+    setFilters({
+      fromAirport: searchFrom || undefined,
+      toAirport: searchTo || undefined,
+    });
+  };
 
   return (
     <Layout>
@@ -119,7 +144,7 @@ export default function TasksPage() {
                     className="w-full pl-12 pr-4 py-3 bg-background border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary"
                   />
                 </div>
-                <Button size="lg" className="w-full">
+                <Button size="lg" className="w-full" onClick={handleSearch}>
                   <Search className="w-5 h-5" />
                   Найти задания
                 </Button>
@@ -133,7 +158,13 @@ export default function TasksPage() {
           <div className="container">
             <div className="flex items-center justify-between mb-6">
               <p className="text-muted-foreground">
-                Найдено <span className="font-semibold text-foreground">{mockTasks.length}</span> заданий
+                {isLoading ? (
+                  "Загрузка..."
+                ) : (
+                  <>
+                    Найдено <span className="font-semibold text-foreground">{tasks.length}</span> заданий
+                  </>
+                )}
               </p>
               <Button variant="ghost" size="sm">
                 <Filter className="w-4 h-4" />
@@ -141,18 +172,35 @@ export default function TasksPage() {
               </Button>
             </div>
 
-            <div className="grid gap-6">
-              {mockTasks.map((task) => (
+            {isLoading ? (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="w-8 h-8 animate-spin text-primary" />
+              </div>
+            ) : tasks.length === 0 ? (
+              <div className="text-center py-12">
+                <p className="text-muted-foreground">Задания не найдены</p>
+              </div>
+            ) : (
+              <div className="grid gap-6">
+                {tasks.map((task: any) => (
                 <Link
                   key={task.id}
                   to={`/tasks/${task.id}`}
-                  className="group bg-card p-6 rounded-2xl shadow-sm hover:shadow-md transition-all duration-300"
-                >
-                  <div className="flex flex-col lg:flex-row gap-6">
-                    {/* Photo placeholder */}
-                    <div className="w-24 h-24 bg-primary-light rounded-xl flex items-center justify-center text-4xl flex-shrink-0">
-                      {task.photo}
-                    </div>
+                    className="group bg-card p-6 rounded-2xl shadow-sm hover:shadow-md transition-all duration-300"
+                  >
+                    <div className="flex flex-col lg:flex-row gap-6">
+                      {/* Photo */}
+                      <div className="w-24 h-24 bg-primary-light rounded-xl flex items-center justify-center flex-shrink-0 overflow-hidden">
+                        {task.photos && task.photos.length > 0 ? (
+                          <img
+                            src={task.photos[0]}
+                            alt={task.title}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <Package className="w-12 h-12 text-muted-foreground" />
+                        )}
+                      </div>
 
                     {/* Content */}
                     <div className="flex-1 min-w-0">
@@ -176,8 +224,8 @@ export default function TasksPage() {
                             <Plane className="w-4 h-4 text-primary-foreground" />
                           </div>
                           <div>
-                            <div className="font-semibold text-foreground">{task.from.city}</div>
-                            <div className="text-xs text-muted-foreground">{task.from.airport}</div>
+                            <div className="font-semibold text-foreground">{task.fromAirport}</div>
+                            <div className="text-xs text-muted-foreground">{task.fromPoint || "Место встречи"}</div>
                           </div>
                         </div>
                         <ArrowRight className="w-5 h-5 text-muted-foreground" />
@@ -186,8 +234,8 @@ export default function TasksPage() {
                             <MapPin className="w-4 h-4 text-secondary-foreground" />
                           </div>
                           <div>
-                            <div className="font-semibold text-foreground">{task.to.city}</div>
-                            <div className="text-xs text-muted-foreground">{task.to.airport}</div>
+                            <div className="font-semibold text-foreground">{task.toAirport}</div>
+                            <div className="text-xs text-muted-foreground">{task.toPoint || "Место встречи"}</div>
                           </div>
                         </div>
                       </div>
@@ -196,28 +244,31 @@ export default function TasksPage() {
                       <div className="flex flex-wrap items-center gap-6 text-sm">
                         <div className="flex items-center gap-2 text-muted-foreground">
                           <Calendar className="w-4 h-4" />
-                          {task.dateFrom} — {task.dateTo}
+                          {new Date(task.dateFrom).toLocaleDateString('ru-RU')} — {new Date(task.dateTo).toLocaleDateString('ru-RU')}
                         </div>
                         <div className="flex items-center gap-2 text-muted-foreground">
                           <Package className="w-4 h-4" />
-                          {sizeLabels[task.size]}
+                          {sizeLabels[task.size] || task.size}
                         </div>
-                        <div className="flex items-center gap-2">
-                          <div className="w-6 h-6 gradient-hero rounded-full flex items-center justify-center text-xs text-primary-foreground font-bold">
-                            {task.sender.name[0]}
+                        {task.sender && (
+                          <div className="flex items-center gap-2">
+                            <div className="w-6 h-6 gradient-hero rounded-full flex items-center justify-center text-xs text-primary-foreground font-bold">
+                              {task.sender.name?.[0] || "?"}
+                            </div>
+                            <span className="text-foreground">{task.sender.name || "Пользователь"}</span>
+                            <div className="flex items-center gap-1">
+                              <Star className="w-4 h-4 fill-secondary text-secondary" />
+                              <span className="text-foreground font-medium">{task.sender.rating?.toFixed(1) || "0.0"}</span>
+                            </div>
                           </div>
-                          <span className="text-foreground">{task.sender.name}</span>
-                          <div className="flex items-center gap-1">
-                            <Star className="w-4 h-4 fill-secondary text-secondary" />
-                            <span className="text-foreground font-medium">{task.sender.rating}</span>
-                          </div>
-                        </div>
+                        )}
                       </div>
                     </div>
                   </div>
                 </Link>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </div>
         </section>
       </div>

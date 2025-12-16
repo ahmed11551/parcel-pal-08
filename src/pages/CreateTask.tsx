@@ -1,6 +1,7 @@
 import { Layout } from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { 
   Camera, 
   MapPin, 
@@ -9,8 +10,13 @@ import {
   DollarSign,
   Info,
   ChevronRight,
-  CheckCircle2
+  CheckCircle2,
+  Loader2,
+  X
 } from "lucide-react";
+import { tasksAPI, filesAPI } from "@/lib/api";
+import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
 
 const sizeOptions = [
   { value: "S", label: "Маленький", description: "До 1 кг, помещается в карман" },
@@ -30,7 +36,12 @@ const airports = [
 ];
 
 export default function CreateTaskPage() {
+  const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
   const [step, setStep] = useState(1);
+  const [photos, setPhotos] = useState<string[]>([]);
+  const [uploading, setUploading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -45,8 +56,67 @@ export default function CreateTaskPage() {
     reward: "",
   });
 
+  // Проверка аутентификации
+  if (!isAuthenticated) {
+    navigate("/login");
+    return null;
+  }
+
   const handleInputChange = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    setUploading(true);
+    try {
+      const fileArray = Array.from(files);
+      const response = await filesAPI.uploadMultiple(fileArray);
+      const urls = response.data.urls || [response.data.url];
+      setPhotos((prev) => [...prev, ...urls]);
+      toast.success("Фото загружены");
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || "Ошибка при загрузке фото");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleRemovePhoto = (index: number) => {
+    setPhotos((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleSubmit = async () => {
+    if (photos.length === 0) {
+      toast.error("Загрузите хотя бы одно фото");
+      return;
+    }
+
+    if (!isStepValid()) {
+      toast.error("Заполните все обязательные поля");
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      const taskData = {
+        ...formData,
+        photos,
+        estimatedValue: formData.estimatedValue ? parseInt(formData.estimatedValue) : undefined,
+        reward: parseInt(formData.reward),
+        size: formData.size as "S" | "M" | "L",
+      };
+
+      await tasksAPI.create(taskData);
+      toast.success("Задание создано и отправлено на модерацию");
+      navigate("/tasks");
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || "Ошибка при создании задания");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const isStepValid = () => {
@@ -106,12 +176,52 @@ export default function CreateTaskPage() {
                   <label className="block text-sm font-medium text-foreground mb-2">
                     Фото посылки *
                   </label>
-                  <div className="border-2 border-dashed border-border rounded-xl p-8 text-center hover:border-primary transition-colors cursor-pointer">
-                    <Camera className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                    <p className="text-muted-foreground">
-                      Нажмите, чтобы загрузить фото
-                    </p>
-                  </div>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    onChange={handlePhotoUpload}
+                    disabled={uploading}
+                    className="hidden"
+                    id="photo-upload"
+                  />
+                  <label
+                    htmlFor="photo-upload"
+                    className="border-2 border-dashed border-border rounded-xl p-8 text-center hover:border-primary transition-colors cursor-pointer block"
+                  >
+                    {uploading ? (
+                      <>
+                        <Loader2 className="w-12 h-12 text-muted-foreground mx-auto mb-4 animate-spin" />
+                        <p className="text-muted-foreground">Загрузка...</p>
+                      </>
+                    ) : (
+                      <>
+                        <Camera className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                        <p className="text-muted-foreground">
+                          Нажмите, чтобы загрузить фото
+                        </p>
+                      </>
+                    )}
+                  </label>
+                  {photos.length > 0 && (
+                    <div className="grid grid-cols-4 gap-4 mt-4">
+                      {photos.map((url, index) => (
+                        <div key={index} className="relative group">
+                          <img
+                            src={url}
+                            alt={`Photo ${index + 1}`}
+                            className="w-full h-24 object-cover rounded-lg"
+                          />
+                          <button
+                            onClick={() => handleRemovePhoto(index)}
+                            className="absolute top-1 right-1 bg-destructive text-destructive-foreground rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
                 {/* Title */}
@@ -360,10 +470,20 @@ export default function CreateTaskPage() {
               ) : (
                 <Button
                   variant="hero"
-                  disabled={!isStepValid()}
+                  disabled={!isStepValid() || submitting || photos.length === 0}
+                  onClick={handleSubmit}
                 >
-                  Опубликовать задание
-                  <ChevronRight className="w-4 h-4" />
+                  {submitting ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Создание...
+                    </>
+                  ) : (
+                    <>
+                      Опубликовать задание
+                      <ChevronRight className="w-4 h-4" />
+                    </>
+                  )}
                 </Button>
               )}
             </div>

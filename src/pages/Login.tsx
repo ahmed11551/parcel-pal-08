@@ -1,17 +1,54 @@
 import { Layout } from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
-import { Phone, ArrowRight, Shield } from "lucide-react";
+import { Phone, ArrowRight, Shield, Loader2 } from "lucide-react";
+import { authAPI } from "@/lib/api";
+import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
 
 export default function LoginPage() {
   const [phone, setPhone] = useState("");
   const [code, setCode] = useState("");
   const [step, setStep] = useState<"phone" | "code">("phone");
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
+  const { login } = useAuth();
 
-  const handleSendCode = () => {
-    if (phone.length >= 10) {
+  const handleSendCode = async () => {
+    if (phone.length < 10) {
+      toast.error("Введите корректный номер телефона");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      await authAPI.sendCode(phone);
       setStep("code");
+      toast.success("Код отправлен на ваш номер телефона");
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || "Ошибка при отправке кода");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleVerifyCode = async () => {
+    if (code.length < 4) {
+      toast.error("Введите код из SMS");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const response = await authAPI.verifyCode(phone, code);
+      login(response.data.accessToken, response.data.user);
+      toast.success("Вход выполнен успешно");
+      navigate("/");
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || "Неверный код");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -56,10 +93,19 @@ export default function LoginPage() {
                   size="lg"
                   className="w-full"
                   onClick={handleSendCode}
-                  disabled={phone.length < 10}
+                  disabled={phone.length < 10 || loading}
                 >
-                  Получить код
-                  <ArrowRight className="w-5 h-5" />
+                  {loading ? (
+                    <>
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                      Отправка...
+                    </>
+                  ) : (
+                    <>
+                      Получить код
+                      <ArrowRight className="w-5 h-5" />
+                    </>
+                  )}
                 </Button>
               </div>
             ) : (
@@ -81,9 +127,23 @@ export default function LoginPage() {
                   </p>
                 </div>
 
-                <Button size="lg" className="w-full" disabled={code.length < 4}>
-                  Войти
-                  <ArrowRight className="w-5 h-5" />
+                <Button
+                  size="lg"
+                  className="w-full"
+                  onClick={handleVerifyCode}
+                  disabled={code.length < 4 || loading}
+                >
+                  {loading ? (
+                    <>
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                      Проверка...
+                    </>
+                  ) : (
+                    <>
+                      Войти
+                      <ArrowRight className="w-5 h-5" />
+                    </>
+                  )}
                 </Button>
 
                 <button

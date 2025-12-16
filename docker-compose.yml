@@ -1,0 +1,79 @@
+version: '3.8'
+
+services:
+  # PostgreSQL база данных
+  postgres:
+    image: postgres:16-alpine
+    container_name: sendbuddy-postgres
+    environment:
+      POSTGRES_USER: sendbuddy
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-changeme}
+      POSTGRES_DB: sendbuddy
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sendbuddy"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis для кеширования
+  redis:
+    image: redis:7-alpine
+    container_name: sendbuddy-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Backend API
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: sendbuddy-backend
+    environment:
+      NODE_ENV: production
+      PORT: 3001
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USERNAME: sendbuddy
+      DB_PASSWORD: ${DB_PASSWORD:-changeme}
+      DB_DATABASE: sendbuddy
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      JWT_SECRET: ${JWT_SECRET:-changeme}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:5173}
+      # Добавьте остальные переменные окружения
+    ports:
+      - "3001:3001"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # Frontend
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: sendbuddy-frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  redis_data:
+

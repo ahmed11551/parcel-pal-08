@@ -1,73 +1,109 @@
-# Welcome to your Lovable project
+# SendBuddy - P2P платформа доставки посылок
 
-## Project info
+Безопасная P2P-платформа для передачи небольших посылок через путешественников с минимальными рисками.
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+## 🚀 Технологии
 
-## How can I edit this code?
+### Backend
+- NestJS
+- TypeORM
+- PostgreSQL
+- JWT аутентификация
+- Swagger документация
 
-There are several ways of editing your application.
-
-**Use Lovable**
-
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
-
-Changes made via Lovable will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
-```
-
-**Edit a file directly in GitHub**
-
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
-
-**Use GitHub Codespaces**
-
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
-
-## What technologies are used for this project?
-
-This project is built with:
-
-- Vite
-- TypeScript
+### Frontend
 - React
+- TypeScript
+- Vite
 - shadcn-ui
 - Tailwind CSS
 
-## How can I deploy this project?
+## 📦 Быстрый старт
 
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
+### 1. Автоматическая настройка
 
-## Can I connect a custom domain to my Lovable project?
+```bash
+./setup.sh
+```
 
-Yes, you can!
+### 2. Установка зависимостей
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+```bash
+npm install
+cd backend && npm install && cd ..
+```
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+### 3. Создание базы данных
+
+```bash
+createdb -U postgres sendbuddy
+```
+
+### 4. Запуск
+
+**Терминал 1 - Backend:**
+```bash
+cd backend
+npm run start:dev
+```
+
+**Терминал 2 - Frontend:**
+```bash
+npm run dev
+```
+
+### 5. Проверка
+
+- Backend API: http://localhost:3001/api/docs
+- Frontend: http://localhost:5173
+
+📖 **Подробные инструкции**: [START_HERE.md](./START_HERE.md) или [QUICK_START.md](./QUICK_START.md)
+
+## 📚 Документация
+
+- [Реализованный функционал](./IMPLEMENTATION.md)
+- [Backend README](./backend/README.md)
+- [API документация](http://localhost:3001/api/docs) (после запуска backend)
+- [🚀 Деплой на Timeweb Cloud](./TIMEWEB_DEPLOY.md) - Полное руководство по развертыванию
+
+## 🎯 Основной функционал
+
+- ✅ Регистрация/вход по телефону с SMS-верификацией
+- ✅ Верификация через соцсети (Telegram, VK)
+- ✅ Создание заданий на доставку
+- ✅ Система откликов курьеров
+- ✅ Безопасные платежи через эскроу (ЮKassa)
+- ✅ Чат между отправителем и курьером
+- ✅ Система рейтингов и отзывов
+- ✅ Админ-панель для модерации
+- ✅ Загрузка фото предметов
+
+## 🔧 Настройка
+
+См. [SETUP_GUIDE.md](./SETUP_GUIDE.md) для подробной инструкции по настройке и запуску проекта.
+
+## 📚 Документация
+
+- [SETUP_GUIDE.md](./SETUP_GUIDE.md) - Руководство по настройке и запуску
+- [IMPLEMENTATION.md](./IMPLEMENTATION.md) - Описание реализованного функционала
+- [FRONTEND_COMPLETE.md](./FRONTEND_COMPLETE.md) - Описание frontend страниц
+- [NEXT_STEPS.md](./NEXT_STEPS.md) - Следующие шаги развития
+- [🚀 TIMEWEB_DEPLOY.md](./TIMEWEB_DEPLOY.md) - **Деплой на Timeweb Cloud** (полное руководство)
+- [backend/README.md](./backend/README.md) - Документация backend API
+
+## 🚀 Деплой на Timeweb Cloud
+
+Проект готов к развертыванию на [Timeweb Cloud](https://timeweb.cloud/). 
+
+**Быстрый старт:**
+1. Прочитайте [TIMEWEB_DEPLOY.md](./TIMEWEB_DEPLOY.md) - полное руководство
+2. Используйте скрипт `./deploy-timeweb.sh` для автоматического деплоя
+3. Настройте базы данных PostgreSQL и Redis в панели Timeweb Cloud
+4. Настройте S3 хранилище для файлов
+
+**Что включено:**
+- ✅ Docker конфигурация для backend и frontend
+- ✅ Nginx конфигурация для production
+- ✅ Поддержка Timeweb Cloud S3
+- ✅ Автоматические скрипты деплоя
+- ✅ Примеры .env файлов
