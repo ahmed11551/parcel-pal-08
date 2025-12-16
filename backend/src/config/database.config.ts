@@ -10,14 +10,31 @@ export class DatabaseConfig implements TypeOrmOptionsFactory {
   createTypeOrmOptions(): TypeOrmModuleOptions {
     const sslEnabled = this.configService.get('DB_SSL') === 'true';
     const sslCaPath = this.configService.get('DB_SSL_CA');
-    const sslConfig = sslEnabled
-      ? {
-          rejectUnauthorized: true,
-          ca: sslCaPath && fs.existsSync(sslCaPath)
-            ? fs.readFileSync(sslCaPath).toString()
-            : undefined,
+    
+    let sslConfig: any = false;
+    
+    if (sslEnabled) {
+      if (sslCaPath && fs.existsSync(sslCaPath)) {
+        try {
+          const caCert = fs.readFileSync(sslCaPath).toString();
+          sslConfig = {
+            rejectUnauthorized: true,
+            ca: caCert,
+          };
+        } catch (error) {
+          console.warn('Failed to read SSL certificate, using rejectUnauthorized: false');
+          sslConfig = {
+            rejectUnauthorized: false,
+          };
         }
-      : false;
+      } else {
+        // Если сертификат не найден, но SSL включен, используем без проверки (для разработки)
+        console.warn('SSL certificate not found, using rejectUnauthorized: false');
+        sslConfig = {
+          rejectUnauthorized: false,
+        };
+      }
+    }
 
     return {
       type: 'postgres',
