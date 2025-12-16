@@ -3,7 +3,8 @@ import { ValidationPipe, Logger } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
-import * as helmet from 'helmet';
+// @ts-ignore - helmet не имеет типов для NestJS
+const helmet = require('helmet');
 
 const logger = new Logger('Bootstrap');
 
