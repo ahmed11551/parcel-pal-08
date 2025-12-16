@@ -21,7 +21,10 @@ export default function TermsPage() {
             </div>
             <div>
               <h1 className="text-3xl font-bold">Условия использования</h1>
-              <p className="text-muted-foreground">Последнее обновление: {new Date().toLocaleDateString('ru-RU')}</p>
+              <p className="text-muted-foreground">Последнее обновление: 16 декабря 2025 г.</p>
+              <p className="text-sm text-muted-foreground mt-2">
+                Настоящий документ является публичной офертой. Используя Платформу, вы соглашаетесь с условиями.
+              </p>
             </div>
           </div>
 

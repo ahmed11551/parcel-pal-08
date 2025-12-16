@@ -5,11 +5,11 @@ import { ConfigService } from '@nestjs/config';
 import { Payment, PaymentStatus, PaymentProvider } from './entities/payment.entity';
 import { Order, OrderStatus } from '../orders/entities/order.entity';
 import { CreatePaymentDto } from './dto/create-payment.dto';
-// import YooKassa from 'yookassa'; // Раскомментировать при настройке ЮKassa
+import { YooKassa } from '@a2seven/yoo-kassa';
 
 @Injectable()
 export class PaymentsService {
-  private yooKassaClient: any;
+  private yooKassaClient: YooKassa | null = null;
 
   constructor(
     @InjectRepository(Payment)
@@ -19,16 +19,22 @@ export class PaymentsService {
     private configService: ConfigService,
   ) {
     // Инициализация ЮKassa
-    // Раскомментировать при настройке:
-    // const YooKassa = require('yookassa');
-    // const shopId = this.configService.get<string>('YOOKASSA_SHOP_ID');
-    // const secretKey = this.configService.get<string>('YOOKASSA_SECRET_KEY');
-    // if (shopId && secretKey) {
-    //   this.yooKassaClient = new YooKassa({
-    //     shopId,
-    //     secretKey,
-    //   });
-    // }
+    const shopId = this.configService.get<string>('YOOKASSA_SHOP_ID');
+    const secretKey = this.configService.get<string>('YOOKASSA_SECRET_KEY');
+    
+    if (shopId && secretKey) {
+      try {
+        this.yooKassaClient = new YooKassa({
+          shopId,
+          secretKey,
+        });
+        console.log('✅ ЮKassa инициализирована');
+      } catch (error) {
+        console.warn('⚠️ Ошибка инициализации ЮKassa:', error);
+      }
+    } else {
+      console.warn('⚠️ YOOKASSA_SHOP_ID или YOOKASSA_SECRET_KEY не настроены. Платежи будут недоступны.');
+    }
   }
 
   async create(createPaymentDto: CreatePaymentDto): Promise<Payment> {
@@ -82,26 +88,32 @@ export class PaymentsService {
 
   private async createYooKassaPayment(order: Order) {
     if (!this.yooKassaClient) {
-      throw new BadRequestException('ЮKassa не настроена');
+      throw new BadRequestException('ЮKassa не настроена. Проверьте YOOKASSA_SHOP_ID и YOOKASSA_SECRET_KEY в .env');
     }
 
-    const payment = await this.yooKassaClient.createPayment({
-      amount: {
-        value: (order.totalAmount / 100).toFixed(2),
-        currency: 'RUB',
-      },
-      capture: false, // двухстадийный платеж (холдирование)
-      confirmation: {
-        type: 'redirect',
-        return_url: this.configService.get<string>('PAYMENT_RETURN_URL', 'https://sendbuddy.ru/payment/success'),
-      },
-      description: `Оплата заказа #${order.id}`,
-      metadata: {
-        orderId: order.id,
-      },
-    }, 'payment');
+    try {
+      const payment = await this.yooKassaClient.createPayment({
+        amount: {
+          value: (order.totalAmount / 100).toFixed(2),
+          currency: 'RUB',
+        },
+        capture: false, // двухстадийный платеж (холдирование)
+        confirmation: {
+          type: 'redirect',
+          return_url: this.configService.get<string>('PAYMENT_RETURN_URL') || 
+                     `${this.configService.get<string>('FRONTEND_URL')}/payment/success`,
+        },
+        description: `Оплата заказа #${order.id}`,
+        metadata: {
+          orderId: order.id,
+        },
+      }, 'payment');
 
-    return payment;
+      return payment;
+    } catch (error: any) {
+      console.error('Ошибка создания платежа ЮKassa:', error);
+      throw new BadRequestException(`Ошибка создания платежа: ${error.message}`);
+    }
   }
 
   async handleWebhook(paymentId: string, event: string, data: any): Promise<void> {

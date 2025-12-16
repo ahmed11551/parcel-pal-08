@@ -21,7 +21,10 @@ export default function PrivacyPage() {
             </div>
             <div>
               <h1 className="text-3xl font-bold">Политика конфиденциальности</h1>
-              <p className="text-muted-foreground">Последнее обновление: {new Date().toLocaleDateString('ru-RU')}</p>
+              <p className="text-muted-foreground">Последнее обновление: 16 декабря 2025 г.</p>
+              <p className="text-sm text-muted-foreground mt-2">
+                Обработка персональных данных осуществляется в соответствии с ФЗ-152 "О персональных данных".
+              </p>
             </div>
           </div>
 

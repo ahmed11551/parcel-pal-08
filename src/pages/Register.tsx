@@ -1,8 +1,11 @@
 import { Layout } from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
-import { Phone, User, ArrowRight, Shield, CheckCircle2 } from "lucide-react";
+import { Phone, User, ArrowRight, CheckCircle2, Loader2 } from "lucide-react";
+import { authAPI } from "@/lib/api";
+import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
 
 export default function RegisterPage() {
   const [formData, setFormData] = useState({
@@ -12,14 +15,59 @@ export default function RegisterPage() {
   const [code, setCode] = useState("");
   const [step, setStep] = useState<"info" | "verify">("info");
   const [agreedToTerms, setAgreedToTerms] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
+  const { login } = useAuth();
 
   const handleInputChange = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
-  const handleSendCode = () => {
-    if (formData.name && formData.phone.length >= 10 && agreedToTerms) {
+  const handleSendCode = async () => {
+    if (!formData.name || formData.phone.length < 10) {
+      toast.error("Заполните все поля");
+      return;
+    }
+
+    if (!agreedToTerms) {
+      toast.error("Необходимо согласиться с условиями использования");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      await authAPI.sendCode(formData.phone);
       setStep("verify");
+      toast.success("Код отправлен на ваш номер телефона");
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || "Ошибка при отправке кода");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleVerifyCode = async () => {
+    if (code.length < 4) {
+      toast.error("Введите код из SMS");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const response = await authAPI.verifyCode(formData.phone, code);
+      
+      // Обновляем имя пользователя после регистрации
+      if (formData.name && response.data.user) {
+        response.data.user.name = formData.name;
+      }
+      
+      login(response.data.accessToken, response.data.user);
+      toast.success("Регистрация выполнена успешно");
+      navigate("/");
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || "Неверный код");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -99,10 +147,19 @@ export default function RegisterPage() {
                   size="lg"
                   className="w-full"
                   onClick={handleSendCode}
-                  disabled={!formData.name || formData.phone.length < 10 || !agreedToTerms}
+                  disabled={!formData.name || formData.phone.length < 10 || !agreedToTerms || loading}
                 >
-                  Получить код
-                  <ArrowRight className="w-5 h-5" />
+                  {loading ? (
+                    <>
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                      Отправка...
+                    </>
+                  ) : (
+                    <>
+                      Получить код
+                      <ArrowRight className="w-5 h-5" />
+                    </>
+                  )}
                 </Button>
               </div>
             ) : (
@@ -124,9 +181,23 @@ export default function RegisterPage() {
                   </p>
                 </div>
 
-                <Button size="lg" className="w-full" disabled={code.length < 4}>
-                  Создать аккаунт
-                  <CheckCircle2 className="w-5 h-5" />
+                <Button 
+                  size="lg" 
+                  className="w-full" 
+                  onClick={handleVerifyCode}
+                  disabled={code.length < 4 || loading}
+                >
+                  {loading ? (
+                    <>
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                      Регистрация...
+                    </>
+                  ) : (
+                    <>
+                      Создать аккаунт
+                      <CheckCircle2 className="w-5 h-5" />
+                    </>
+                  )}
                 </Button>
 
                 <button

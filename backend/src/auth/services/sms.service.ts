@@ -17,19 +17,35 @@ export class SmsService {
   }
 
   private async sendViaTwilio(phone: string, message: string): Promise<void> {
-    // В production здесь будет реальная интеграция с Twilio
-    // const twilio = require('twilio');
-    // const client = twilio(
-    //   this.configService.get('TWILIO_ACCOUNT_SID'),
-    //   this.configService.get('TWILIO_AUTH_TOKEN'),
-    // );
-    // await client.messages.create({
-    //   body: message,
-    //   from: this.configService.get('TWILIO_PHONE_NUMBER'),
-    //   to: phone,
-    // });
-    
-    console.log(`[Twilio] Sending to ${phone}: ${message}`);
+    const accountSid = this.configService.get<string>('TWILIO_ACCOUNT_SID');
+    const authToken = this.configService.get<string>('TWILIO_AUTH_TOKEN');
+    const fromNumber = this.configService.get<string>('TWILIO_PHONE_NUMBER');
+
+    if (!accountSid || !authToken || !fromNumber) {
+      console.warn('⚠️ Twilio не настроен. SMS не будет отправлен.');
+      console.log(`[SMS Mock] Код для ${phone}: ${message}`);
+      // В development режиме можно использовать mock
+      if (this.configService.get<string>('NODE_ENV') === 'development') {
+        return;
+      }
+      throw new Error('Twilio не настроен. Проверьте TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_PHONE_NUMBER');
+    }
+
+    try {
+      const twilio = require('twilio');
+      const client = twilio(accountSid, authToken);
+      
+      await client.messages.create({
+        body: message,
+        from: fromNumber,
+        to: phone,
+      });
+      
+      console.log(`✅ SMS отправлен на ${phone}`);
+    } catch (error: any) {
+      console.error('Ошибка отправки SMS через Twilio:', error);
+      throw new Error(`Ошибка отправки SMS: ${error.message}`);
+    }
   }
 }
 
