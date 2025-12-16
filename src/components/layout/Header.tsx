@@ -23,8 +23,8 @@ export function Header() {
   };
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 bg-card/80 backdrop-blur-lg border-b border-border">
-      <nav className="container flex items-center justify-between h-16">
+    <header className="fixed top-0 left-0 right-0 z-50 bg-card/80 backdrop-blur-lg border-b border-border safe-area-top">
+      <nav className="container flex items-center justify-between h-16 px-4 sm:px-6">
         <Link to="/" className="flex items-center gap-2 group">
           <div className="w-10 h-10 gradient-hero rounded-xl flex items-center justify-center shadow-md group-hover:shadow-glow transition-shadow">
             <Plane className="w-5 h-5 text-primary-foreground" />
