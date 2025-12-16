@@ -3,6 +3,7 @@ import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { PaymentsService } from './payments.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CreatePaymentDto } from './dto/create-payment.dto';
+import { PaymentProvider } from './entities/payment.entity';
 
 @ApiTags('payments')
 @Controller('payments')
@@ -30,6 +31,20 @@ export class PaymentsController {
         body.object.id,
         body.event,
         body.object,
+        PaymentProvider.YOOKASSA,
+      );
+    }
+    // Обработка webhook от CloudPayments
+    else if (provider === 'cloudpayments') {
+      // CloudPayments отправляет TransactionId в теле запроса
+      const transactionId = body.TransactionId || body.Model?.TransactionId;
+      const event = body.Status || 'payment';
+      
+      await this.paymentsService.handleWebhook(
+        transactionId?.toString(),
+        event,
+        body,
+        PaymentProvider.CLOUDPAYMENTS,
       );
     }
     return { ok: true };
