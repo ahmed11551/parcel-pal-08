@@ -1,4 +1,3 @@
-import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -6,6 +5,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { useEffect } from "react";
 import { AuthProvider } from "./contexts/AuthContext";
 import { PrivateRoute } from "./components/PrivateRoute";
+import { ErrorBoundary } from "./components/ErrorBoundary";
 import { initTelegramWebApp } from "./lib/telegram";
 import { initVKApp } from "./lib/vk";
 import Index from "./pages/Index";
@@ -31,19 +31,19 @@ const App = () => {
     }
 
     // Инициализация VK Mini App
-    if (window.location.search.includes('vk_platform')) {
+    if (window.vkBridge || (window.location.search.includes('vk_platform') && window.location.search.includes('vk_app_id'))) {
       initVKApp();
     }
   }, []);
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <Routes>
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>
+          <TooltipProvider>
+            <Sonner />
+            <BrowserRouter>
+              <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/tasks" element={<Tasks />} />
               <Route path="/tasks/:id" element={<TaskDetail />} />
@@ -90,6 +90,7 @@ const App = () => {
         </TooltipProvider>
       </AuthProvider>
     </QueryClientProvider>
+    </ErrorBoundary>
   );
 };
 
