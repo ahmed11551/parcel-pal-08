@@ -37,6 +37,9 @@ export function Header() {
           <Link to="/tasks" className="text-muted-foreground hover:text-foreground transition-colors font-medium">
             Задания
           </Link>
+          <Link to="/how-it-works" className="text-muted-foreground hover:text-foreground transition-colors font-medium">
+            Как это работает
+          </Link>
           {isAuthenticated && (
             <>
               <Link to="/orders" className="text-muted-foreground hover:text-foreground transition-colors font-medium">

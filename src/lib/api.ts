@@ -1,6 +1,7 @@
 import axios from 'axios';
 
-// Используем относительный путь для Vercel proxy, или переменную окружения
+// Используем относительный путь для Vercel proxy (HTTPS), или переменную окружения
+// В production всегда используем относительный путь /api для избежания Mixed Content
 const API_BASE_URL = import.meta.env.VITE_API_URL || (import.meta.env.PROD ? '/api' : 'http://localhost:3001/api');
 
 // Создаем экземпляр axios
