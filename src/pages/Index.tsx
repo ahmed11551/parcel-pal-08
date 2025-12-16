@@ -134,23 +134,12 @@ export default function Index() {
               </div>
             </div>
             
-            <div className="relative animate-fade-up overflow-hidden rounded-2xl shadow-lg" style={{ animationDelay: "0.2s" }}>
+            <div className="relative animate-fade-up" style={{ animationDelay: "0.2s" }}>
               <img 
                 src={heroImage} 
                 alt="SendBuddy - P2P доставка" 
-                className="w-full rounded-2xl"
+                className="w-full rounded-2xl shadow-lg"
               />
-              {/* Анимированный самолет */}
-              <div className="absolute inset-0 pointer-events-none">
-                <div className="absolute bottom-[15%] left-[10%] animate-plane-fly">
-                  <Plane className="w-16 h-16 md:w-20 md:h-20 text-primary drop-shadow-lg" 
-                    style={{ 
-                      filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.2))',
-                      transform: 'rotate(-45deg)'
-                    }} 
-                  />
-                </div>
-              </div>
             </div>
           </div>
           
