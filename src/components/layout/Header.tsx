@@ -110,6 +110,13 @@ export function Header() {
             >
               Задания
             </Link>
+            <Link
+              to="/how-it-works"
+              className="text-muted-foreground hover:text-foreground transition-colors font-medium py-2"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              Как это работает
+            </Link>
             {isAuthenticated && (
               <>
                 <Link
