@@ -47,11 +47,12 @@ async function bootstrap() {
   SwaggerModule.setup('api/docs', app, document);
 
     // Валидация обязательных переменных окружения
-    const requiredEnvVars = ['DB_HOST', 'DB_USERNAME', 'DB_PASSWORD', 'DB_DATABASE'];
-    const missingVars = requiredEnvVars.filter(varName => !process.env[varName]);
+    // Проверяем либо DATABASE_URL, либо отдельные переменные
+    const hasDatabaseUrl = !!process.env.DATABASE_URL;
+    const hasSeparateVars = process.env.DB_HOST && process.env.DB_USERNAME && process.env.DB_PASSWORD && process.env.DB_DATABASE;
     
-    if (missingVars.length > 0) {
-      logger.error(`Отсутствуют обязательные переменные окружения: ${missingVars.join(', ')}`);
+    if (!hasDatabaseUrl && !hasSeparateVars) {
+      logger.error('Отсутствуют обязательные переменные окружения для БД. Нужен либо DATABASE_URL, либо DB_HOST, DB_USERNAME, DB_PASSWORD, DB_DATABASE');
       process.exit(1);
     }
 
