@@ -8,7 +8,12 @@ const { Pool } = pg;
 
 export const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: process.env.NODE_ENV === 'production' || process.env.DATABASE_URL?.includes('railway') 
+  // Отключаем SSL для локальных подключений (Docker Compose)
+  // Включаем только для внешних сервисов (Railway, облачные БД)
+  ssl: process.env.DATABASE_URL?.includes('railway') || 
+       process.env.DATABASE_URL?.includes('amazonaws') ||
+       process.env.DATABASE_URL?.includes('azure') ||
+       (process.env.NODE_ENV === 'production' && !process.env.DATABASE_URL?.includes('localhost') && !process.env.DATABASE_URL?.includes('postgres:'))
     ? { rejectUnauthorized: false } 
     : false,
   // Connection pool settings
