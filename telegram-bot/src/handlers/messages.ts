@@ -6,6 +6,7 @@ const API_URL = process.env.API_URL || 'http://localhost:3001/api';
 
 // Хранилище состояний пользователей (в production использовать Redis)
 const userStates = new Map<number, 'support' | 'review' | null>();
+const pendingReviews = new Map<number, number>(); // telegramId -> rating
 
 export const messageHandler = async (ctx: Context) => {
   if (!ctx.message || !('text' in ctx.message)) return;
@@ -46,7 +47,6 @@ export const messageHandler = async (ctx: Context) => {
 
   if (state === 'review') {
     // Пользователь пишет текст отзыва
-    const pendingReviews = new Map<number, number>(); // В production использовать Redis
     const rating = pendingReviews.get(userId);
     
     if (rating) {
