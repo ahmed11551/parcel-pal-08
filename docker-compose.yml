@@ -46,6 +46,8 @@ services:
       FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
       UPLOAD_DIR: /app/uploads
       MAX_FILE_SIZE: 5242880
+      SMS_PROVIDER: ${SMS_PROVIDER:-smsru}
+      SMSRU_API_ID: ${SMSRU_API_ID:-}
     ports:
       - "3001:3001"
     volumes:
