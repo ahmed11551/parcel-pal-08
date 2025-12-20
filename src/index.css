@@ -130,6 +130,30 @@
   body {
     @apply bg-background text-foreground font-sans antialiased;
     font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Улучшения для мобильных устройств */
+  @media (max-width: 768px) {
+    body {
+      font-size: 16px; /* Предотвращает автоматическое масштабирование на iOS */
+    }
+    
+    input, textarea, select {
+      font-size: 16px !important; /* Предотвращает зум на iOS при фокусе */
+    }
+  }
+
+  /* Safe area для iPhone с вырезом */
+  .safe-area-top {
+    padding-top: env(safe-area-inset-top);
+  }
+
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom);
   }
 }
 

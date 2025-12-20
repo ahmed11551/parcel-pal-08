@@ -1,0 +1,71 @@
+import { NestFactory } from '@nestjs/core';
+import { ValidationPipe, Logger } from '@nestjs/common';
+import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
+import { AppModule } from './app.module';
+import { HttpExceptionFilter } from './common/filters/http-exception.filter';
+// @ts-ignore - helmet не имеет типов для NestJS
+const helmet = require('helmet');
+
+const logger = new Logger('Bootstrap');
+
+async function bootstrap() {
+  try {
+    const app = await NestFactory.create(AppModule);
+    
+    // Helmet для security headers
+    app.use(helmet());
+
+  // CORS
+  app.enableCors({
+    origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+    credentials: true,
+  });
+
+  // Global exception filter
+  app.useGlobalFilters(new HttpExceptionFilter());
+
+  // Global validation pipe
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true,
+    }),
+  );
+
+  // API prefix
+  app.setGlobalPrefix('api');
+
+  // Swagger documentation
+  const config = new DocumentBuilder()
+    .setTitle('SendBuddy API')
+    .setDescription('P2P Delivery Platform API')
+    .setVersion('1.0')
+    .addBearerAuth()
+    .build();
+  const document = SwaggerModule.createDocument(app, config);
+  SwaggerModule.setup('api/docs', app, document);
+
+    // Валидация обязательных переменных окружения
+    // Проверяем либо DATABASE_URL, либо отдельные переменные
+    const hasDatabaseUrl = !!process.env.DATABASE_URL;
+    const hasSeparateVars = process.env.DB_HOST && process.env.DB_USERNAME && process.env.DB_PASSWORD && process.env.DB_DATABASE;
+    
+    if (!hasDatabaseUrl && !hasSeparateVars) {
+      logger.error('Отсутствуют обязательные переменные окружения для БД. Нужен либо DATABASE_URL, либо DB_HOST, DB_USERNAME, DB_PASSWORD, DB_DATABASE');
+      process.exit(1);
+    }
+
+    const port = process.env.PORT || 3001;
+    await app.listen(port);
+    
+    logger.log(`✅ Приложение запущено на http://localhost:${port}`);
+    logger.log(`📚 Swagger документация: http://localhost:${port}/api/docs`);
+  } catch (error) {
+    logger.error('❌ Ошибка при запуске приложения:', error);
+    process.exit(1);
+  }
+}
+
+bootstrap();
+

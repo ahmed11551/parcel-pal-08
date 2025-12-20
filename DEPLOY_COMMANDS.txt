@@ -1,0 +1,13 @@
+# Команды для выполнения на сервере (скопируйте и выполните по порядку)
+
+# 1. Перейдите в /tmp и скачайте скрипт
+cd /tmp
+curl -sSL https://raw.githubusercontent.com/ahmed11551/parcel-pal-08/main/deploy-frontend-timeweb.sh -o deploy-frontend-timeweb.sh
+chmod +x deploy-frontend-timeweb.sh
+
+# 2. Запустите скрипт развертывания
+./deploy-frontend-timeweb.sh
+
+# Или выполните все в одной команде:
+curl -sSL https://raw.githubusercontent.com/ahmed11551/parcel-pal-08/main/deploy-frontend-timeweb.sh | bash
+
