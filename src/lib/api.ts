@@ -219,6 +219,70 @@ class ApiClient {
   async getUser(id: number) {
     return this.request<any>(`/users/${id}`);
   }
+
+  // Telegram
+  async telegramAuth(initData: string) {
+    return this.request<{
+      success: boolean;
+      token?: string;
+      user?: any;
+      telegramUser?: any;
+      needsPhoneAuth?: boolean;
+    }>('/telegram/auth', {
+      method: 'POST',
+      body: JSON.stringify({ initData }),
+    });
+  }
+
+  async linkTelegram(initData: string) {
+    return this.request<{ success: boolean; message: string }>(
+      '/telegram/link',
+      {
+        method: 'POST',
+        body: JSON.stringify({ initData }),
+      }
+    );
+  }
+
+  async subscribeTelegram(telegramId: number, subscriptionType?: string) {
+    return this.request<{ success: boolean; message: string }>(
+      '/telegram/subscribe',
+      {
+        method: 'POST',
+        body: JSON.stringify({ telegramId, subscriptionType }),
+      }
+    );
+  }
+
+  async unsubscribeTelegram(telegramId: number) {
+    return this.request<{ success: boolean; message: string }>(
+      '/telegram/unsubscribe',
+      {
+        method: 'POST',
+        body: JSON.stringify({ telegramId }),
+      }
+    );
+  }
+
+  async sendSupportMessage(telegramId: number | null, message: string) {
+    return this.request<{ success: boolean; message: string }>(
+      '/telegram/support',
+      {
+        method: 'POST',
+        body: JSON.stringify({ telegramId, message }),
+      }
+    );
+  }
+
+  async createTelegramReview(telegramId: number, rating: number, text?: string) {
+    return this.request<{ success: boolean; message: string }>(
+      '/telegram/review',
+      {
+        method: 'POST',
+        body: JSON.stringify({ telegramId, rating, text }),
+      }
+    );
+  }
 }
 
 export const api = new ApiClient();
