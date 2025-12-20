@@ -6,6 +6,7 @@ import authRoutes from './routes/auth.js';
 import taskRoutes from './routes/tasks.js';
 import userRoutes from './routes/users.js';
 import uploadRoutes from './routes/upload.js';
+import telegramRoutes from './routes/telegram.js';
 
 dotenv.config();
 
@@ -31,6 +32,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/tasks', taskRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/upload', uploadRoutes);
+app.use('/api/telegram', telegramRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

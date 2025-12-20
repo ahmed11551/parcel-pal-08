@@ -161,3 +161,44 @@ export const setupTelegramMainButton = (text: string, onClick: () => void) => {
   return () => {};
 };
 
+// Применение темы Telegram к приложению
+export const applyTelegramTheme = () => {
+  if (isTelegramWebApp()) {
+    const tg = window.Telegram!.WebApp;
+    const theme = tg.themeParams;
+    
+    if (theme.bg_color) {
+      document.documentElement.style.setProperty('--telegram-bg-color', theme.bg_color);
+    }
+    if (theme.text_color) {
+      document.documentElement.style.setProperty('--telegram-text-color', theme.text_color);
+    }
+    if (theme.button_color) {
+      document.documentElement.style.setProperty('--telegram-button-color', theme.button_color);
+    }
+    if (theme.button_text_color) {
+      document.documentElement.style.setProperty('--telegram-button-text-color', theme.button_text_color);
+    }
+    
+    // Применяем цветовую схему
+    if (tg.colorScheme === 'dark') {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }
+};
+
+// Инициализация при загрузке приложения
+if (typeof window !== 'undefined') {
+  if (isTelegramWebApp()) {
+    const tg = initTelegramWebApp();
+    if (tg) {
+      applyTelegramTheme();
+      
+      // Слушаем изменения темы
+      tg.onEvent('themeChanged', applyTelegramTheme);
+    }
+  }
+}
+

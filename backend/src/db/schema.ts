@@ -98,6 +98,64 @@ export async function createTables() {
       )
     `);
 
+    // Telegram users table (link Telegram ID with user ID)
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS telegram_users (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+        telegram_id BIGINT UNIQUE NOT NULL,
+        username VARCHAR(100),
+        first_name VARCHAR(100),
+        last_name VARCHAR(100),
+        subscribed BOOLEAN DEFAULT FALSE,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
+    // Telegram subscriptions table
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS telegram_subscriptions (
+        id SERIAL PRIMARY KEY,
+        telegram_id BIGINT NOT NULL,
+        subscription_type VARCHAR(50) NOT NULL,
+        active BOOLEAN DEFAULT TRUE,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (telegram_id) REFERENCES telegram_users(telegram_id) ON DELETE CASCADE
+      )
+    `);
+
+    // Support messages table
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS support_messages (
+        id SERIAL PRIMARY KEY,
+        telegram_id BIGINT,
+        user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+        message TEXT NOT NULL,
+        response TEXT,
+        status VARCHAR(20) DEFAULT 'open' CHECK (status IN ('open', 'answered', 'closed')),
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (telegram_id) REFERENCES telegram_users(telegram_id) ON DELETE SET NULL
+      )
+    `);
+
+    // Telegram notifications table
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS telegram_notifications (
+        id SERIAL PRIMARY KEY,
+        telegram_id BIGINT NOT NULL,
+        type VARCHAR(50) NOT NULL,
+        title VARCHAR(200) NOT NULL,
+        message TEXT NOT NULL,
+        data JSONB,
+        sent BOOLEAN DEFAULT FALSE,
+        sent_at TIMESTAMP,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (telegram_id) REFERENCES telegram_users(telegram_id) ON DELETE CASCADE
+      )
+    `);
+
     // Indexes
     await client.query(`
       CREATE INDEX IF NOT EXISTS idx_tasks_sender ON tasks(sender_id);
@@ -107,6 +165,13 @@ export async function createTables() {
       CREATE INDEX IF NOT EXISTS idx_messages_task ON messages(task_id);
       CREATE INDEX IF NOT EXISTS idx_messages_users ON messages(sender_id, receiver_id);
       CREATE INDEX IF NOT EXISTS idx_sms_codes_phone ON sms_codes(phone);
+      CREATE INDEX IF NOT EXISTS idx_telegram_users_user_id ON telegram_users(user_id);
+      CREATE INDEX IF NOT EXISTS idx_telegram_users_telegram_id ON telegram_users(telegram_id);
+      CREATE INDEX IF NOT EXISTS idx_telegram_subscriptions_telegram_id ON telegram_subscriptions(telegram_id);
+      CREATE INDEX IF NOT EXISTS idx_support_messages_telegram_id ON support_messages(telegram_id);
+      CREATE INDEX IF NOT EXISTS idx_support_messages_user_id ON support_messages(user_id);
+      CREATE INDEX IF NOT EXISTS idx_telegram_notifications_telegram_id ON telegram_notifications(telegram_id);
+      CREATE INDEX IF NOT EXISTS idx_telegram_notifications_sent ON telegram_notifications(sent);
     `);
 
     await client.query('COMMIT');
