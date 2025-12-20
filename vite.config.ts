@@ -20,4 +20,4 @@ export default defineConfig({
   },
   // Для Capacitor
   base: './',
-}));
+});
