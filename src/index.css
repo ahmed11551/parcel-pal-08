@@ -145,6 +145,38 @@
     input, textarea, select {
       font-size: 16px !important; /* Предотвращает зум на iOS при фокусе */
     }
+    
+    /* Улучшение отступов для маленьких экранов */
+    .container {
+      padding-left: 1rem;
+      padding-right: 1rem;
+    }
+    
+    /* Улучшение кнопок на мобильных */
+    button, .btn {
+      min-height: 44px; /* Минимальный размер для удобного нажатия */
+    }
+    
+    /* Улучшение карточек */
+    .card, [class*="rounded-"] {
+      border-radius: 0.75rem;
+    }
+  }
+  
+  /* Очень маленькие экраны */
+  @media (max-width: 375px) {
+    .container {
+      padding-left: 0.75rem;
+      padding-right: 0.75rem;
+    }
+    
+    h1 {
+      font-size: 1.75rem;
+    }
+    
+    h2 {
+      font-size: 1.5rem;
+    }
   }
 
   /* Safe area для iPhone с вырезом */

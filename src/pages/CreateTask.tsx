@@ -279,7 +279,7 @@ export default function CreateTaskPage() {
                   <label className="block text-sm font-medium text-foreground mb-2">
                     Размер *
                   </label>
-                  <div className="grid grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     {sizeOptions.map((option) => (
                       <button
                         key={option.value}
@@ -404,7 +404,7 @@ export default function CreateTaskPage() {
                   Укажите желаемые даты доставки
                 </p>
 
-                <div className="grid grid-cols-2 gap-4 mb-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
                   <div>
                     <label className="block text-sm font-medium text-foreground mb-2">
                       Дата от *
@@ -413,7 +413,7 @@ export default function CreateTaskPage() {
                       type="date"
                       value={formData.dateFrom}
                       onChange={(e) => handleInputChange("dateFrom", e.target.value)}
-                      className="w-full px-4 py-3 bg-background border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary"
+                      className="w-full px-4 py-3 bg-background border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary text-base"
                     />
                   </div>
                   <div>
@@ -424,7 +424,7 @@ export default function CreateTaskPage() {
                       type="date"
                       value={formData.dateTo}
                       onChange={(e) => handleInputChange("dateTo", e.target.value)}
-                      className="w-full px-4 py-3 bg-background border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary"
+                      className="w-full px-4 py-3 bg-background border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary text-base"
                     />
                   </div>
                 </div>

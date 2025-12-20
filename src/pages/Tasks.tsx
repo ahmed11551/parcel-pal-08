@@ -206,9 +206,9 @@ export default function TasksPage() {
                   to={`/tasks/${task.id}`}
                   className="group bg-card p-6 rounded-2xl shadow-sm hover:shadow-md transition-all duration-300"
                 >
-                  <div className="flex flex-col lg:flex-row gap-6">
+                  <div className="flex flex-col sm:flex-row gap-4 sm:gap-6">
                     {/* Photo placeholder */}
-                    <div className="w-24 h-24 bg-primary-light rounded-xl flex items-center justify-center flex-shrink-0 overflow-hidden">
+                    <div className="w-full sm:w-24 h-24 sm:h-24 bg-primary-light rounded-xl flex items-center justify-center flex-shrink-0 overflow-hidden">
                       {task.photoUrl ? (
                         <img src={task.photoUrl} alt={task.title} className="w-full h-full object-cover" />
                       ) : (
@@ -232,23 +232,23 @@ export default function TasksPage() {
                       </div>
 
                       {/* Route */}
-                      <div className="flex flex-wrap items-center gap-4 mb-4">
-                        <div className="flex items-center gap-2">
-                          <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 mb-4">
+                        <div className="flex items-center gap-2 flex-1">
+                          <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center flex-shrink-0">
                             <Plane className="w-4 h-4 text-primary-foreground" />
                           </div>
-                          <div>
-                            <div className="font-semibold text-foreground">{fromInfo.city}</div>
+                          <div className="min-w-0">
+                            <div className="font-semibold text-foreground truncate">{fromInfo.city}</div>
                             <div className="text-xs text-muted-foreground">{task.from?.airport}</div>
                           </div>
                         </div>
-                        <ArrowRight className="w-5 h-5 text-muted-foreground" />
-                        <div className="flex items-center gap-2">
-                          <div className="w-8 h-8 bg-secondary rounded-full flex items-center justify-center">
+                        <ArrowRight className="w-5 h-5 text-muted-foreground hidden sm:block flex-shrink-0" />
+                        <div className="flex items-center gap-2 flex-1 sm:ml-0">
+                          <div className="w-8 h-8 bg-secondary rounded-full flex items-center justify-center flex-shrink-0">
                             <MapPin className="w-4 h-4 text-secondary-foreground" />
                           </div>
-                          <div>
-                            <div className="font-semibold text-foreground">{toInfo.city}</div>
+                          <div className="min-w-0">
+                            <div className="font-semibold text-foreground truncate">{toInfo.city}</div>
                             <div className="text-xs text-muted-foreground">{task.to?.airport}</div>
                           </div>
                         </div>

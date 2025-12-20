@@ -141,15 +141,15 @@ export default function Index() {
           </div>
           
           {/* Stats */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mt-20">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 mt-12 sm:mt-20">
             {stats.map((stat, index) => (
               <div 
                 key={stat.label} 
-                className="text-center p-6 bg-card rounded-2xl shadow-sm animate-fade-up"
+                className="text-center p-4 sm:p-6 bg-card rounded-2xl shadow-sm animate-fade-up"
                 style={{ animationDelay: `${0.3 + index * 0.1}s` }}
               >
-                <div className="text-3xl md:text-4xl font-bold text-primary mb-2">{stat.value}</div>
-                <div className="text-muted-foreground text-sm">{stat.label}</div>
+                <div className="text-2xl sm:text-3xl md:text-4xl font-bold text-primary mb-2">{stat.value}</div>
+                <div className="text-muted-foreground text-xs sm:text-sm">{stat.label}</div>
               </div>
             ))}
           </div>
@@ -206,15 +206,15 @@ export default function Index() {
                 Мы создали платформу, которая делает передачу посылок безопасной и выгодной для всех участников
               </p>
               
-              <div className="grid sm:grid-cols-2 gap-6">
+              <div className="grid sm:grid-cols-2 gap-4 sm:gap-6">
                 {benefits.map((benefit) => (
-                  <div key={benefit.title} className="flex gap-4">
-                    <div className="w-12 h-12 bg-primary-light rounded-xl flex items-center justify-center flex-shrink-0">
-                      <benefit.icon className="w-6 h-6 text-primary" />
+                  <div key={benefit.title} className="flex gap-3 sm:gap-4">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 bg-primary-light rounded-xl flex items-center justify-center flex-shrink-0">
+                      <benefit.icon className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
                     </div>
-                    <div>
-                      <h3 className="font-bold text-foreground mb-1">{benefit.title}</h3>
-                      <p className="text-muted-foreground text-sm">{benefit.description}</p>
+                    <div className="min-w-0">
+                      <h3 className="font-bold text-foreground mb-1 text-sm sm:text-base">{benefit.title}</h3>
+                      <p className="text-muted-foreground text-xs sm:text-sm">{benefit.description}</p>
                     </div>
                   </div>
                 ))}

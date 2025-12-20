@@ -106,44 +106,44 @@ export default function TaskDetailPage() {
               </div>
             )}
 
-            <div className="p-8">
+            <div className="p-4 sm:p-6 md:p-8">
               {/* Header */}
-              <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-6 mb-8">
-                <div className="flex-1">
-                  <h1 className="text-3xl font-bold text-foreground mb-2">{task.title}</h1>
-                  <p className="text-muted-foreground text-lg">{task.description}</p>
+              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 sm:gap-6 mb-6 sm:mb-8">
+                <div className="flex-1 min-w-0">
+                  <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-2 break-words">{task.title}</h1>
+                  <p className="text-muted-foreground text-base sm:text-lg break-words">{task.description}</p>
                 </div>
-                <div className="text-right">
-                  <div className="text-3xl font-bold text-primary">{task.reward.toLocaleString()} ₽</div>
+                <div className="text-left sm:text-right flex-shrink-0">
+                  <div className="text-2xl sm:text-3xl font-bold text-primary">{task.reward.toLocaleString()} ₽</div>
                   <div className="text-muted-foreground text-sm">вознаграждение</div>
                 </div>
               </div>
 
               {/* Route */}
-              <div className="bg-muted p-6 rounded-xl mb-6">
-                <div className="flex flex-col md:flex-row items-center gap-6">
-                  <div className="flex items-center gap-3 flex-1">
-                    <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center">
-                      <Plane className="w-6 h-6 text-primary-foreground" />
+              <div className="bg-muted p-4 sm:p-6 rounded-xl mb-6">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6">
+                  <div className="flex items-start sm:items-center gap-3 flex-1 min-w-0">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 bg-primary rounded-full flex items-center justify-center flex-shrink-0">
+                      <Plane className="w-5 h-5 sm:w-6 sm:h-6 text-primary-foreground" />
                     </div>
-                    <div>
-                      <div className="font-bold text-foreground text-lg">{fromInfo.city}</div>
-                      <div className="text-muted-foreground">{task.from?.airport} - {fromInfo.name}</div>
+                    <div className="min-w-0 flex-1">
+                      <div className="font-bold text-foreground text-base sm:text-lg">{fromInfo.city}</div>
+                      <div className="text-muted-foreground text-sm">{task.from?.airport} - {fromInfo.name}</div>
                       {task.from?.point && (
-                        <div className="text-sm text-muted-foreground mt-1">{task.from.point}</div>
+                        <div className="text-xs sm:text-sm text-muted-foreground mt-1 break-words">{task.from.point}</div>
                       )}
                     </div>
                   </div>
-                  <ArrowRight className="w-6 h-6 text-muted-foreground" />
-                  <div className="flex items-center gap-3 flex-1">
-                    <div className="w-12 h-12 bg-secondary rounded-full flex items-center justify-center">
-                      <MapPin className="w-6 h-6 text-secondary-foreground" />
+                  <ArrowRight className="w-5 h-5 sm:w-6 sm:h-6 text-muted-foreground hidden sm:block flex-shrink-0" />
+                  <div className="flex items-start sm:items-center gap-3 flex-1 min-w-0 sm:ml-0">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 bg-secondary rounded-full flex items-center justify-center flex-shrink-0">
+                      <MapPin className="w-5 h-5 sm:w-6 sm:h-6 text-secondary-foreground" />
                     </div>
-                    <div>
-                      <div className="font-bold text-foreground text-lg">{toInfo.city}</div>
-                      <div className="text-muted-foreground">{task.to?.airport} - {toInfo.name}</div>
+                    <div className="min-w-0 flex-1">
+                      <div className="font-bold text-foreground text-base sm:text-lg">{toInfo.city}</div>
+                      <div className="text-muted-foreground text-sm">{task.to?.airport} - {toInfo.name}</div>
                       {task.to?.point && (
-                        <div className="text-sm text-muted-foreground mt-1">{task.to.point}</div>
+                        <div className="text-xs sm:text-sm text-muted-foreground mt-1 break-words">{task.to.point}</div>
                       )}
                     </div>
                   </div>
