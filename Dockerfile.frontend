@@ -13,8 +13,10 @@ RUN npm ci
 COPY . .
 
 # Build with environment variable
-ARG VITE_API_URL
+# В production всегда используем относительный путь /api
+ARG VITE_API_URL=/api
 ENV VITE_API_URL=${VITE_API_URL}
+ENV NODE_ENV=production
 
 # Build
 RUN npm run build

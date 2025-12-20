@@ -1,5 +1,9 @@
 // Используем относительный путь для продакшена, или переменную окружения
-const API_URL = import.meta.env.VITE_API_URL || (import.meta.env.PROD ? '/api' : 'http://localhost:3001/api');
+// В production всегда используем относительный путь /api (nginx проксирует)
+// В development используем localhost:3001 или прокси из vite.config.ts
+const API_URL = import.meta.env.PROD 
+  ? '/api'  // В production всегда относительный путь
+  : (import.meta.env.VITE_API_URL || 'http://localhost:3001/api');  // В development
 
 export interface ApiError {
   error: string;
