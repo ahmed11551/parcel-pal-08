@@ -6,6 +6,10 @@ import { reviewsCommand } from '../commands/reviews';
 import telegramAPI from '../utils/api';
 import { MINI_APP_URL } from '../index';
 
+// Хранилище состояний пользователей (в production использовать Redis)
+const userStates = new Map<number, 'support' | 'review' | null>();
+const pendingReviews = new Map<number, number>(); // telegramId -> rating
+
 export const callbackHandler = async (ctx: Context) => {
   if (!ctx.callbackQuery || !('data' in ctx.callbackQuery)) return;
 
@@ -24,7 +28,33 @@ export const callbackHandler = async (ctx: Context) => {
       break;
 
     case 'support':
-      await supportCommand(ctx);
+      if (telegramId) {
+        userStates.set(telegramId, 'support');
+      }
+      await ctx.reply(
+        '💬 *Поддержка SendBuddy*\n\n' +
+        'Напишите ваш вопрос или проблему, и мы обязательно поможем!\n\n' +
+        'Вы также можете:\n' +
+        '📧 Email: support@sendbuddy.app\n' +
+        '📱 Телефон: +7 (800) 123-45-67',
+        {
+          parse_mode: 'Markdown',
+          reply_markup: {
+            inline_keyboard: [
+              [
+                { text: '❌ Отмена', callback_data: 'cancel_support' }
+              ]
+            ]
+          }
+        }
+      );
+      break;
+
+    case 'cancel_support':
+      if (telegramId) {
+        userStates.delete(telegramId);
+      }
+      await ctx.reply('Отменено. Используйте /help для списка команд.');
       break;
 
     case 'review':
@@ -91,20 +121,48 @@ export const callbackHandler = async (ctx: Context) => {
     case 'review_4':
     case 'review_5':
       const rating = parseInt(data.split('_')[1]);
+      if (telegramId) {
+        pendingReviews.set(telegramId, rating);
+        userStates.set(telegramId, 'review');
+      }
       await ctx.reply(
         `Спасибо за оценку ${rating} ⭐!\n\n` +
-        `Пожалуйста, напишите ваш отзыв:`,
+        `Пожалуйста, напишите ваш отзыв (или отправьте /skip чтобы пропустить):`,
         {
           reply_markup: {
             inline_keyboard: [
               [
-                { text: '❌ Отмена', callback_data: 'start' }
+                { text: '⏭ Пропустить', callback_data: 'skip_review' },
+                { text: '❌ Отмена', callback_data: 'cancel_review' }
               ]
             ]
           }
         }
       );
-      // Здесь можно сохранить состояние ожидания отзыва
+      break;
+
+    case 'skip_review':
+      if (telegramId) {
+        const rating = pendingReviews.get(telegramId);
+        if (rating) {
+          try {
+            await telegramAPI.createReview(telegramId, rating);
+            await ctx.reply('✅ Отзыв сохранен! Спасибо!');
+          } catch (error) {
+            await ctx.reply('❌ Ошибка при сохранении отзыва.');
+          }
+          pendingReviews.delete(telegramId);
+          userStates.delete(telegramId);
+        }
+      }
+      break;
+
+    case 'cancel_review':
+      if (telegramId) {
+        pendingReviews.delete(telegramId);
+        userStates.delete(telegramId);
+      }
+      await ctx.reply('Отменено. Используйте /help для списка команд.');
       break;
 
     default:

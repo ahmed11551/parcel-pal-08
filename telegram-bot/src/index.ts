@@ -6,6 +6,7 @@ import { supportCommand } from './commands/support';
 import { reviewsCommand } from './commands/reviews';
 import { messageHandler } from './handlers/messages';
 import { callbackHandler } from './handlers/callbacks';
+import { startNotificationService } from './services/notifications';
 
 dotenv.config();
 
@@ -62,6 +63,9 @@ const startBot = async () => {
     }
     
     console.log('🤖 SendBuddy Telegram Bot готов к работе!');
+    
+    // Запускаем сервис уведомлений (проверка каждые 30 секунд)
+    startNotificationService(30000);
   } catch (error) {
     console.error('❌ Ошибка запуска бота:', error);
     process.exit(1);

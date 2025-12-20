@@ -60,6 +60,18 @@ export const telegramAPI = {
     const response = await api.get(`/telegram/notifications/${telegramId}`);
     return response.data;
   },
+
+  // Отметить уведомление как отправленное
+  async markNotificationAsSent(notificationId: number) {
+    const response = await api.post(`/telegram/notifications/${notificationId}/mark-sent`);
+    return response.data;
+  },
+
+  // Получить подписчиков
+  async getSubscribers() {
+    const response = await api.get('/telegram/subscribers');
+    return response.data;
+  },
 };
 
 export default telegramAPI;

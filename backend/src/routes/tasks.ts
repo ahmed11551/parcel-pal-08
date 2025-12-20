@@ -2,6 +2,7 @@ import express from 'express';
 import { pool } from '../db/index.js';
 import { authenticateToken, optionalAuth, AuthRequest } from '../middleware/auth.js';
 import { z } from 'zod';
+import * as notifications from '../services/telegram-notifications.js';
 
 const router = express.Router();
 
@@ -212,6 +213,30 @@ router.post('/', authenticateToken, async (req: AuthRequest, res) => {
       [task.id, req.userId, data.reward, commission]
     );
 
+    // Отправляем уведомления подписанным пользователям о новом задании
+    // Находим всех подписанных пользователей с подходящим маршрутом
+    const subscribers = await pool.query(
+      `SELECT DISTINCT tu.telegram_id 
+       FROM telegram_users tu
+       INNER JOIN telegram_subscriptions ts ON tu.telegram_id = ts.telegram_id
+       WHERE tu.subscribed = TRUE AND ts.active = TRUE
+       AND tu.telegram_id IS NOT NULL
+       LIMIT 100`
+    );
+
+    const taskData = {
+      id: task.id,
+      title: task.title,
+      from: { airport: data.fromAirport },
+      to: { airport: data.toAirport },
+      reward: data.reward,
+    };
+
+    // Отправляем уведомления (асинхронно, не блокируем ответ)
+    subscribers.rows.forEach((row) => {
+      notifications.notifyNewTask(row.telegram_id, taskData).catch(console.error);
+    });
+
     res.status(201).json({
       id: task.id,
       title: task.title,
@@ -274,6 +299,42 @@ router.post('/:id/assign', authenticateToken, async (req: AuthRequest, res) => {
       [req.userId, 'assigned', id]
     );
 
+    // Отправляем уведомление курьеру
+    const courierTelegram = await pool.query(
+      'SELECT telegram_id FROM telegram_users WHERE user_id = $1',
+      [req.userId]
+    );
+
+    if (courierTelegram.rows.length > 0 && courierTelegram.rows[0].telegram_id) {
+      const taskData = {
+        id: task.id,
+        title: task.title,
+        from: { airport: task.from_airport },
+        to: { airport: task.to_airport },
+      };
+      notifications.notifyTaskAssigned(courierTelegram.rows[0].telegram_id, taskData).catch(console.error);
+    }
+
+    // Отправляем уведомление отправителю
+    const senderTelegram = await pool.query(
+      'SELECT telegram_id FROM telegram_users WHERE user_id = $1',
+      [task.sender_id]
+    );
+
+    if (senderTelegram.rows.length > 0 && senderTelegram.rows[0].telegram_id) {
+      const taskData = {
+        id: task.id,
+        title: task.title,
+        from: { airport: task.from_airport },
+        to: { airport: task.to_airport },
+      };
+      notifications.notifyTaskStatusChanged(
+        senderTelegram.rows[0].telegram_id,
+        taskData,
+        'assigned'
+      ).catch(console.error);
+    }
+
     res.json({ success: true, message: 'Task assigned successfully' });
   } catch (error) {
     console.error('Assign task error:', error);
@@ -315,6 +376,68 @@ router.patch('/:id/status', authenticateToken, async (req: AuthRequest, res) => 
          WHERE task_id = $1 AND courier_id = $2`,
         [id, task.courier_id]
       );
+
+      // Уведомление о переводе денег курьеру
+      const courierTelegram = await pool.query(
+        'SELECT telegram_id FROM telegram_users WHERE user_id = $1',
+        [task.courier_id]
+      );
+
+      if (courierTelegram.rows.length > 0 && courierTelegram.rows[0].telegram_id) {
+        const paymentResult = await pool.query(
+          'SELECT amount FROM payments WHERE task_id = $1',
+          [id]
+        );
+        const amount = paymentResult.rows[0]?.amount || 0;
+
+        const taskData = {
+          id: task.id,
+          title: task.title,
+        };
+        notifications.notifyPaymentReleased(
+          courierTelegram.rows[0].telegram_id,
+          amount,
+          taskData
+        ).catch(console.error);
+      }
+    }
+
+    // Отправляем уведомления об изменении статуса
+    const taskData = {
+      id: task.id,
+      title: task.title,
+      from: { airport: task.from_airport },
+      to: { airport: task.to_airport },
+    };
+
+    // Уведомление отправителю
+    if (task.sender_id) {
+      const senderTelegram = await pool.query(
+        'SELECT telegram_id FROM telegram_users WHERE user_id = $1',
+        [task.sender_id]
+      );
+      if (senderTelegram.rows.length > 0 && senderTelegram.rows[0].telegram_id) {
+        notifications.notifyTaskStatusChanged(
+          senderTelegram.rows[0].telegram_id,
+          taskData,
+          status
+        ).catch(console.error);
+      }
+    }
+
+    // Уведомление курьеру
+    if (task.courier_id) {
+      const courierTelegram = await pool.query(
+        'SELECT telegram_id FROM telegram_users WHERE user_id = $1',
+        [task.courier_id]
+      );
+      if (courierTelegram.rows.length > 0 && courierTelegram.rows[0].telegram_id) {
+        notifications.notifyTaskStatusChanged(
+          courierTelegram.rows[0].telegram_id,
+          taskData,
+          status
+        ).catch(console.error);
+      }
     }
 
     res.json({ success: true, status });

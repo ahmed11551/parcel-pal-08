@@ -358,5 +358,46 @@ router.get('/notifications/:telegramId', async (req, res) => {
   }
 });
 
+/**
+ * POST /api/telegram/notifications/:id/mark-sent
+ * Отметить уведомление как отправленное
+ */
+router.post('/notifications/:id/mark-sent', async (req, res) => {
+  try {
+    const id = parseInt(req.params.id);
+
+    await pool.query(
+      'UPDATE telegram_notifications SET sent = TRUE, sent_at = CURRENT_TIMESTAMP WHERE id = $1',
+      [id]
+    );
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Mark notification as sent error:', error);
+    res.status(500).json({ error: 'Failed to mark notification as sent' });
+  }
+});
+
+/**
+ * GET /api/telegram/subscribers
+ * Получить список подписанных пользователей (для бота)
+ */
+router.get('/subscribers', async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT DISTINCT tu.telegram_id
+       FROM telegram_users tu
+       INNER JOIN telegram_subscriptions ts ON tu.telegram_id = ts.telegram_id
+       WHERE tu.subscribed = TRUE AND ts.active = TRUE
+       AND tu.telegram_id IS NOT NULL`
+    );
+
+    res.json({ subscribers: result.rows });
+  } catch (error) {
+    console.error('Get subscribers error:', error);
+    res.status(500).json({ error: 'Failed to get subscribers' });
+  }
+});
+
 export default router;
 
