@@ -1,10 +1,13 @@
 import { Layout } from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
-import { Phone, User, ArrowRight, Shield, CheckCircle2 } from "lucide-react";
+import { Phone, User, ArrowRight, Shield, CheckCircle2, Loader2 } from "lucide-react";
+import { api } from "@/lib/api";
+import { toast } from "sonner";
 
 export default function RegisterPage() {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     name: "",
     phone: "",
@@ -12,14 +15,39 @@ export default function RegisterPage() {
   const [code, setCode] = useState("");
   const [step, setStep] = useState<"info" | "verify">("info");
   const [agreedToTerms, setAgreedToTerms] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const handleInputChange = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
-  const handleSendCode = () => {
-    if (formData.name && formData.phone.length >= 10 && agreedToTerms) {
+  const handleSendCode = async () => {
+    if (!formData.name || formData.phone.length < 10 || !agreedToTerms) return;
+    
+    setLoading(true);
+    try {
+      await api.registerSendCode(formData.phone, formData.name);
       setStep("verify");
+      toast.success("Код отправлен на ваш номер");
+    } catch (error: any) {
+      toast.error(error.message || "Ошибка при отправке кода");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleVerify = async () => {
+    if (code.length < 4) return;
+    
+    setLoading(true);
+    try {
+      await api.registerVerify(formData.phone, code, formData.name);
+      toast.success("Регистрация успешна!");
+      navigate("/tasks");
+    } catch (error: any) {
+      toast.error(error.message || "Неверный код");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -99,10 +127,19 @@ export default function RegisterPage() {
                   size="lg"
                   className="w-full"
                   onClick={handleSendCode}
-                  disabled={!formData.name || formData.phone.length < 10 || !agreedToTerms}
+                  disabled={!formData.name || formData.phone.length < 10 || !agreedToTerms || loading}
                 >
-                  Получить код
-                  <ArrowRight className="w-5 h-5" />
+                  {loading ? (
+                    <>
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                      Отправка...
+                    </>
+                  ) : (
+                    <>
+                      Получить код
+                      <ArrowRight className="w-5 h-5" />
+                    </>
+                  )}
                 </Button>
               </div>
             ) : (
@@ -124,9 +161,23 @@ export default function RegisterPage() {
                   </p>
                 </div>
 
-                <Button size="lg" className="w-full" disabled={code.length < 4}>
-                  Создать аккаунт
-                  <CheckCircle2 className="w-5 h-5" />
+                <Button 
+                  size="lg" 
+                  className="w-full" 
+                  disabled={code.length < 4 || loading}
+                  onClick={handleVerify}
+                >
+                  {loading ? (
+                    <>
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                      Регистрация...
+                    </>
+                  ) : (
+                    <>
+                      Создать аккаунт
+                      <CheckCircle2 className="w-5 h-5" />
+                    </>
+                  )}
                 </Button>
 
                 <button

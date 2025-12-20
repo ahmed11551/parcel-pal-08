@@ -1,17 +1,45 @@
 import { Layout } from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
-import { Phone, ArrowRight, Shield } from "lucide-react";
+import { Phone, ArrowRight, Shield, Loader2 } from "lucide-react";
+import { api } from "@/lib/api";
+import { toast } from "sonner";
 
 export default function LoginPage() {
+  const navigate = useNavigate();
   const [phone, setPhone] = useState("");
   const [code, setCode] = useState("");
   const [step, setStep] = useState<"phone" | "code">("phone");
+  const [loading, setLoading] = useState(false);
 
-  const handleSendCode = () => {
-    if (phone.length >= 10) {
+  const handleSendCode = async () => {
+    if (phone.length < 10) return;
+    
+    setLoading(true);
+    try {
+      await api.loginSendCode(phone);
       setStep("code");
+      toast.success("Код отправлен на ваш номер");
+    } catch (error: any) {
+      toast.error(error.message || "Ошибка при отправке кода");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleVerify = async () => {
+    if (code.length < 4) return;
+    
+    setLoading(true);
+    try {
+      await api.loginVerify(phone, code);
+      toast.success("Вход выполнен успешно");
+      navigate("/tasks");
+    } catch (error: any) {
+      toast.error(error.message || "Неверный код");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -56,10 +84,19 @@ export default function LoginPage() {
                   size="lg"
                   className="w-full"
                   onClick={handleSendCode}
-                  disabled={phone.length < 10}
+                  disabled={phone.length < 10 || loading}
                 >
-                  Получить код
-                  <ArrowRight className="w-5 h-5" />
+                  {loading ? (
+                    <>
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                      Отправка...
+                    </>
+                  ) : (
+                    <>
+                      Получить код
+                      <ArrowRight className="w-5 h-5" />
+                    </>
+                  )}
                 </Button>
               </div>
             ) : (
@@ -81,9 +118,23 @@ export default function LoginPage() {
                   </p>
                 </div>
 
-                <Button size="lg" className="w-full" disabled={code.length < 4}>
-                  Войти
-                  <ArrowRight className="w-5 h-5" />
+                <Button 
+                  size="lg" 
+                  className="w-full" 
+                  disabled={code.length < 4 || loading}
+                  onClick={handleVerify}
+                >
+                  {loading ? (
+                    <>
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                      Проверка...
+                    </>
+                  ) : (
+                    <>
+                      Войти
+                      <ArrowRight className="w-5 h-5" />
+                    </>
+                  )}
                 </Button>
 
                 <button

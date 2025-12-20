@@ -1,6 +1,7 @@
 import { Layout } from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { 
   Camera, 
   MapPin, 
@@ -9,8 +10,12 @@ import {
   DollarSign,
   Info,
   ChevronRight,
-  CheckCircle2
+  CheckCircle2,
+  Loader2,
+  X
 } from "lucide-react";
+import { api } from "@/lib/api";
+import { toast } from "sonner";
 
 const sizeOptions = [
   { value: "S", label: "Маленький", description: "До 1 кг, помещается в карман" },
@@ -30,7 +35,12 @@ const airports = [
 ];
 
 export default function CreateTaskPage() {
+  const navigate = useNavigate();
   const [step, setStep] = useState(1);
+  const [loading, setLoading] = useState(false);
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const [photoUrl, setPhotoUrl] = useState<string>("");
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -47,6 +57,82 @@ export default function CreateTaskPage() {
 
   const handleInputChange = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handlePhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setPhotoFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPhotoPreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleRemovePhoto = () => {
+    setPhotoFile(null);
+    setPhotoPreview(null);
+    setPhotoUrl("");
+  };
+
+  const handleUploadPhoto = async () => {
+    if (!photoFile) return;
+    
+    setLoading(true);
+    try {
+      const url = await api.uploadPhoto(photoFile);
+      setPhotoUrl(url);
+      toast.success("Фото загружено");
+    } catch (error: any) {
+      toast.error(error.message || "Ошибка при загрузке фото");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSubmit = async () => {
+    if (!isStepValid()) return;
+
+    // Upload photo if not already uploaded
+    let finalPhotoUrl = photoUrl;
+    if (photoFile && !photoUrl) {
+      setLoading(true);
+      try {
+        finalPhotoUrl = await api.uploadPhoto(photoFile);
+      } catch (error: any) {
+        toast.error(error.message || "Ошибка при загрузке фото");
+        setLoading(false);
+        return;
+      }
+    }
+
+    setLoading(true);
+    try {
+      const taskData = {
+        title: formData.title,
+        description: formData.description,
+        size: formData.size as 'S' | 'M' | 'L',
+        estimatedValue: formData.estimatedValue ? parseInt(formData.estimatedValue) : undefined,
+        photoUrl: finalPhotoUrl || undefined,
+        fromAirport: formData.fromAirport,
+        fromPoint: formData.fromPoint || undefined,
+        toAirport: formData.toAirport,
+        toPoint: formData.toPoint || undefined,
+        dateFrom: formData.dateFrom,
+        dateTo: formData.dateTo,
+        reward: parseInt(formData.reward),
+      };
+
+      await api.createTask(taskData);
+      toast.success("Задание создано успешно!");
+      navigate("/tasks");
+    } catch (error: any) {
+      toast.error(error.message || "Ошибка при создании задания");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const isStepValid = () => {
@@ -104,14 +190,60 @@ export default function CreateTaskPage() {
                 {/* Photo Upload */}
                 <div className="mb-6">
                   <label className="block text-sm font-medium text-foreground mb-2">
-                    Фото посылки *
+                    Фото посылки
                   </label>
-                  <div className="border-2 border-dashed border-border rounded-xl p-8 text-center hover:border-primary transition-colors cursor-pointer">
-                    <Camera className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                    <p className="text-muted-foreground">
-                      Нажмите, чтобы загрузить фото
-                    </p>
-                  </div>
+                  {photoPreview ? (
+                    <div className="relative">
+                      <img 
+                        src={photoPreview} 
+                        alt="Preview" 
+                        className="w-full h-48 object-cover rounded-xl"
+                      />
+                      <button
+                        onClick={handleRemovePhoto}
+                        className="absolute top-2 right-2 p-2 bg-card rounded-full hover:bg-muted transition-colors"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                      {!photoUrl && (
+                        <Button
+                          type="button"
+                          onClick={handleUploadPhoto}
+                          disabled={loading}
+                          className="mt-2 w-full"
+                          variant="outline"
+                        >
+                          {loading ? (
+                            <>
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                              Загрузка...
+                            </>
+                          ) : (
+                            <>
+                              <Camera className="w-4 h-4" />
+                              Загрузить фото
+                            </>
+                          )}
+                        </Button>
+                      )}
+                    </div>
+                  ) : (
+                    <label className="block">
+                      <div className="border-2 border-dashed border-border rounded-xl p-8 text-center hover:border-primary transition-colors cursor-pointer">
+                        <Camera className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                        <p className="text-muted-foreground">
+                          Нажмите, чтобы загрузить фото
+                        </p>
+                      </div>
+                      <input
+                        id="photo-input"
+                        type="file"
+                        accept="image/*"
+                        onChange={handlePhotoSelect}
+                        className="hidden"
+                      />
+                    </label>
+                  )}
                 </div>
 
                 {/* Title */}
@@ -352,7 +484,7 @@ export default function CreateTaskPage() {
               {step < 3 ? (
                 <Button
                   onClick={() => setStep(step + 1)}
-                  disabled={!isStepValid()}
+                  disabled={!isStepValid() || loading}
                 >
                   Далее
                   <ChevronRight className="w-4 h-4" />
@@ -360,10 +492,20 @@ export default function CreateTaskPage() {
               ) : (
                 <Button
                   variant="hero"
-                  disabled={!isStepValid()}
+                  disabled={!isStepValid() || loading}
+                  onClick={handleSubmit}
                 >
-                  Опубликовать задание
-                  <ChevronRight className="w-4 h-4" />
+                  {loading ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Создание...
+                    </>
+                  ) : (
+                    <>
+                      Опубликовать задание
+                      <ChevronRight className="w-4 h-4" />
+                    </>
+                  )}
                 </Button>
               )}
             </div>

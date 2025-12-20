@@ -9,11 +9,32 @@ import {
   ArrowRight,
   Filter,
   Search,
-  Plane
+  Plane,
+  Loader2
 } from "lucide-react";
 import { useState } from "react";
+import { api } from "@/lib/api";
+import { toast } from "sonner";
+import { useQuery } from "@tanstack/react-query";
 
-// Mock data for tasks
+const sizeLabels: Record<string, string> = {
+  S: "Маленький",
+  M: "Средний",
+  L: "Большой",
+};
+
+const airportNames: Record<string, { city: string; name: string }> = {
+  SVO: { city: "Москва", name: "Шереметьево" },
+  DME: { city: "Москва", name: "Домодедово" },
+  VKO: { city: "Москва", name: "Внуково" },
+  LED: { city: "Санкт-Петербург", name: "Пулково" },
+  KZN: { city: "Казань", name: "Казань" },
+  SVX: { city: "Екатеринбург", name: "Кольцово" },
+  AER: { city: "Сочи", name: "Сочи" },
+  ROV: { city: "Ростов-на-Дону", name: "Платов" },
+};
+
+// Mock data for tasks (fallback)
 const mockTasks = [
   {
     id: 1,
@@ -83,6 +104,26 @@ export default function TasksPage() {
   const [searchFrom, setSearchFrom] = useState("");
   const [searchTo, setSearchTo] = useState("");
 
+  const { data, isLoading, error, refetch } = useQuery({
+    queryKey: ['tasks', searchFrom, searchTo],
+    queryFn: () => api.getTasks({
+      from: searchFrom || undefined,
+      to: searchTo || undefined,
+      status: 'active'
+    }),
+    retry: 1,
+  });
+
+  const tasks = data?.tasks || [];
+
+  const handleSearch = () => {
+    refetch();
+  };
+
+  if (error) {
+    toast.error("Ошибка при загрузке заданий");
+  }
+
   return (
     <Layout>
       <div className="gradient-subtle min-h-screen">
@@ -119,9 +160,18 @@ export default function TasksPage() {
                     className="w-full pl-12 pr-4 py-3 bg-background border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary"
                   />
                 </div>
-                <Button size="lg" className="w-full">
+                <Button size="lg" className="w-full" onClick={handleSearch} disabled={isLoading}>
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                      Поиск...
+                    </>
+                  ) : (
+                    <>
                   <Search className="w-5 h-5" />
                   Найти задания
+                    </>
+                  )}
                 </Button>
               </div>
             </div>
@@ -133,7 +183,7 @@ export default function TasksPage() {
           <div className="container">
             <div className="flex items-center justify-between mb-6">
               <p className="text-muted-foreground">
-                Найдено <span className="font-semibold text-foreground">{mockTasks.length}</span> заданий
+                Найдено <span className="font-semibold text-foreground">{tasks.length}</span> заданий
               </p>
               <Button variant="ghost" size="sm">
                 <Filter className="w-4 h-4" />
@@ -141,8 +191,22 @@ export default function TasksPage() {
               </Button>
             </div>
 
+            {isLoading ? (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="w-8 h-8 animate-spin text-primary" />
+              </div>
+            ) : tasks.length === 0 ? (
+              <div className="text-center py-12">
+                <p className="text-muted-foreground text-lg">Задания не найдены</p>
+                <p className="text-muted-foreground text-sm mt-2">Попробуйте изменить параметры поиска</p>
+              </div>
+            ) : (
             <div className="grid gap-6">
-              {mockTasks.map((task) => (
+                {tasks.map((task: any) => {
+                  const fromInfo = airportNames[task.from?.airport] || { city: task.from?.airport, name: task.from?.airport };
+                  const toInfo = airportNames[task.to?.airport] || { city: task.to?.airport, name: task.to?.airport };
+                  
+                  return (
                 <Link
                   key={task.id}
                   to={`/tasks/${task.id}`}
@@ -150,8 +214,12 @@ export default function TasksPage() {
                 >
                   <div className="flex flex-col lg:flex-row gap-6">
                     {/* Photo placeholder */}
-                    <div className="w-24 h-24 bg-primary-light rounded-xl flex items-center justify-center text-4xl flex-shrink-0">
-                      {task.photo}
+                    <div className="w-24 h-24 bg-primary-light rounded-xl flex items-center justify-center flex-shrink-0 overflow-hidden">
+                      {task.photoUrl ? (
+                        <img src={task.photoUrl} alt={task.title} className="w-full h-full object-cover" />
+                      ) : (
+                        <Package className="w-8 h-8 text-primary" />
+                      )}
                     </div>
 
                     {/* Content */}
@@ -176,8 +244,8 @@ export default function TasksPage() {
                             <Plane className="w-4 h-4 text-primary-foreground" />
                           </div>
                           <div>
-                            <div className="font-semibold text-foreground">{task.from.city}</div>
-                            <div className="text-xs text-muted-foreground">{task.from.airport}</div>
+                            <div className="font-semibold text-foreground">{fromInfo.city}</div>
+                            <div className="text-xs text-muted-foreground">{task.from?.airport}</div>
                           </div>
                         </div>
                         <ArrowRight className="w-5 h-5 text-muted-foreground" />
@@ -186,8 +254,8 @@ export default function TasksPage() {
                             <MapPin className="w-4 h-4 text-secondary-foreground" />
                           </div>
                           <div>
-                            <div className="font-semibold text-foreground">{task.to.city}</div>
-                            <div className="text-xs text-muted-foreground">{task.to.airport}</div>
+                            <div className="font-semibold text-foreground">{toInfo.city}</div>
+                            <div className="text-xs text-muted-foreground">{task.to?.airport}</div>
                           </div>
                         </div>
                       </div>
@@ -204,20 +272,24 @@ export default function TasksPage() {
                         </div>
                         <div className="flex items-center gap-2">
                           <div className="w-6 h-6 gradient-hero rounded-full flex items-center justify-center text-xs text-primary-foreground font-bold">
-                            {task.sender.name[0]}
+                            {task.sender?.name?.[0] || '?'}
                           </div>
-                          <span className="text-foreground">{task.sender.name}</span>
+                          <span className="text-foreground">{task.sender?.name || 'Неизвестно'}</span>
+                          {task.sender?.rating && (
                           <div className="flex items-center gap-1">
                             <Star className="w-4 h-4 fill-secondary text-secondary" />
                             <span className="text-foreground font-medium">{task.sender.rating}</span>
                           </div>
+                          )}
                         </div>
                       </div>
                     </div>
                   </div>
                 </Link>
-              ))}
+                  );
+                })}
             </div>
+            )}
           </div>
         </section>
       </div>

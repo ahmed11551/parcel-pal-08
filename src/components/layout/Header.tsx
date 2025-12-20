@@ -1,10 +1,38 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Plane, Package, Menu, X } from "lucide-react";
-import { useState } from "react";
+import { Plane, Package, Menu, X, User, LogOut } from "lucide-react";
+import { useState, useEffect } from "react";
+import { api } from "@/lib/api";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export function Header() {
+  const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [user, setUser] = useState(api.getCurrentUser());
+
+  useEffect(() => {
+    // Check for user updates
+    const checkUser = () => {
+      setUser(api.getCurrentUser());
+    };
+    
+    // Check on mount and set up interval
+    checkUser();
+    const interval = setInterval(checkUser, 1000);
+    
+    return () => clearInterval(interval);
+  }, []);
+
+  const handleLogout = () => {
+    api.logout();
+    setUser(null);
+    navigate("/");
+  };
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-card/80 backdrop-blur-lg border-b border-border">
@@ -30,12 +58,47 @@ export function Header() {
         </div>
 
         <div className="hidden md:flex items-center gap-3">
+          {user ? (
+            <>
+              <Button variant="ghost" asChild>
+                <Link to="/create-task">
+                  <Package className="w-4 h-4 mr-2" />
+                  Создать задание
+                </Link>
+              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="gap-2">
+                    <div className="w-8 h-8 gradient-hero rounded-full flex items-center justify-center text-primary-foreground font-bold text-sm">
+                      {user.name[0]}
+                    </div>
+                    <span className="hidden lg:inline">{user.name}</span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem asChild>
+                    <Link to="/tasks" className="cursor-pointer">
+                      <User className="w-4 h-4 mr-2" />
+                      Мои задания
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleLogout} className="cursor-pointer">
+                    <LogOut className="w-4 h-4 mr-2" />
+                    Выйти
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </>
+          ) : (
+            <>
           <Button variant="ghost" asChild>
             <Link to="/login">Войти</Link>
           </Button>
           <Button asChild>
             <Link to="/register">Регистрация</Link>
           </Button>
+            </>
+          )}
         </div>
 
         {/* Mobile Menu Button */}
@@ -73,12 +136,34 @@ export function Header() {
               Безопасность
             </Link>
             <div className="flex flex-col gap-2 pt-4 border-t border-border">
+              {user ? (
+                <>
+                  <Button variant="outline" asChild className="w-full">
+                    <Link to="/create-task" onClick={() => setMobileMenuOpen(false)}>
+                      <Package className="w-4 h-4 mr-2" />
+                      Создать задание
+                    </Link>
+                  </Button>
+                  <Button variant="outline" asChild className="w-full">
+                    <Link to="/tasks" onClick={() => setMobileMenuOpen(false)}>
+                      Мои задания
+                    </Link>
+                  </Button>
+                  <Button variant="outline" className="w-full" onClick={() => { handleLogout(); setMobileMenuOpen(false); }}>
+                    <LogOut className="w-4 h-4 mr-2" />
+                    Выйти
+                  </Button>
+                </>
+              ) : (
+                <>
               <Button variant="outline" asChild className="w-full">
-                <Link to="/login">Войти</Link>
+                    <Link to="/login" onClick={() => setMobileMenuOpen(false)}>Войти</Link>
               </Button>
               <Button asChild className="w-full">
-                <Link to="/register">Регистрация</Link>
+                    <Link to="/register" onClick={() => setMobileMenuOpen(false)}>Регистрация</Link>
               </Button>
+                </>
+              )}
             </div>
           </div>
         </div>
