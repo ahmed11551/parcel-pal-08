@@ -35,13 +35,13 @@ const steps = [
 export default function HowItWorksPage() {
   return (
     <Layout>
-      <div className="gradient-subtle min-h-screen py-12">
-        <div className="container max-w-4xl">
-          <div className="text-center mb-16">
-            <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-4">
+      <div className="gradient-subtle min-h-screen py-6 sm:py-8 md:py-12">
+        <div className="container max-w-4xl px-4">
+          <div className="text-center mb-8 sm:mb-12 md:mb-16">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-foreground mb-3 sm:mb-4">
               Как это работает
             </h1>
-            <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
+            <p className="text-muted-foreground text-base sm:text-lg max-w-2xl mx-auto">
               Простой процесс от создания задания до получения посылки
             </p>
           </div>

@@ -90,17 +90,17 @@ const faqCategories = [
 export default function FAQPage() {
   return (
     <Layout>
-      <div className="gradient-subtle min-h-screen py-12">
-        <div className="container max-w-4xl">
+      <div className="gradient-subtle min-h-screen py-6 sm:py-8 md:py-12">
+        <div className="container max-w-4xl px-4">
           {/* Header */}
-          <div className="text-center mb-12">
-            <div className="w-16 h-16 gradient-hero rounded-2xl flex items-center justify-center mx-auto mb-4">
-              <HelpCircle className="w-8 h-8 text-primary-foreground" />
+          <div className="text-center mb-8 sm:mb-12">
+            <div className="w-12 h-12 sm:w-16 sm:h-16 gradient-hero rounded-2xl flex items-center justify-center mx-auto mb-3 sm:mb-4">
+              <HelpCircle className="w-6 h-6 sm:w-8 sm:h-8 text-primary-foreground" />
             </div>
-            <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-4">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-foreground mb-3 sm:mb-4">
               Часто задаваемые вопросы
             </h1>
-            <p className="text-lg text-muted-foreground">
+            <p className="text-base sm:text-lg text-muted-foreground">
               Ответы на популярные вопросы о SendBuddy
             </p>
           </div>
