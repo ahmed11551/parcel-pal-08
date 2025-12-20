@@ -472,19 +472,20 @@ export default function CreateTaskPage() {
             )}
 
             {/* Navigation */}
-            <div className="flex justify-between mt-8 pt-6 border-t border-border">
+            <div className="flex flex-col sm:flex-row justify-between gap-4 mt-8 pt-6 border-t border-border">
               {step > 1 ? (
-                <Button variant="ghost" onClick={() => setStep(step - 1)}>
+                <Button variant="ghost" onClick={() => setStep(step - 1)} className="w-full sm:w-auto">
                   Назад
                 </Button>
               ) : (
-                <div />
+                <div className="hidden sm:block" />
               )}
               
               {step < 3 ? (
                 <Button
                   onClick={() => setStep(step + 1)}
                   disabled={!isStepValid() || loading}
+                  className="w-full sm:w-auto"
                 >
                   Далее
                   <ChevronRight className="w-4 h-4" />
@@ -494,6 +495,7 @@ export default function CreateTaskPage() {
                   variant="hero"
                   disabled={!isStepValid() || loading}
                   onClick={handleSubmit}
+                  className="w-full sm:w-auto"
                 >
                   {loading ? (
                     <>

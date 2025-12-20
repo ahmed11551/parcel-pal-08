@@ -101,20 +101,20 @@ export default function Index() {
           <div className="absolute bottom-20 left-20 w-96 h-96 bg-secondary/20 rounded-full blur-3xl" />
         </div>
         
-        <div className="container relative py-20 md:py-32">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
+        <div className="container relative py-12 sm:py-16 md:py-20 lg:py-32 px-4">
+          <div className="grid lg:grid-cols-2 gap-8 sm:gap-12 items-center">
             <div className="animate-fade-up">
-              <div className="inline-flex items-center gap-2 bg-primary-light text-primary-dark px-4 py-2 rounded-full text-sm font-medium mb-6">
-                <Shield className="w-4 h-4" />
+              <div className="inline-flex items-center gap-2 bg-primary-light text-primary-dark px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-medium mb-4 sm:mb-6">
+                <Shield className="w-3 h-3 sm:w-4 sm:h-4" />
                 Безопасная P2P доставка
               </div>
               
-              <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold text-foreground leading-tight mb-6">
+              <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold text-foreground leading-tight mb-4 sm:mb-6">
                 Передайте посылку{" "}
                 <span className="text-gradient">с попутчиком</span>
               </h1>
               
-              <p className="text-lg md:text-xl text-muted-foreground mb-8 max-w-lg">
+              <p className="text-base sm:text-lg md:text-xl text-muted-foreground mb-6 sm:mb-8 max-w-lg">
                 Быстрая и выгодная доставка через путешественников. Безопасные сделки, верифицированные пользователи.
               </p>
               
@@ -133,9 +133,9 @@ export default function Index() {
               </div>
             </div>
             
-            <div className="relative animate-fade-up" style={{ animationDelay: "0.2s" }}>
-              <div className="w-full h-96 bg-gradient-to-br from-primary/20 to-secondary/20 rounded-2xl shadow-lg flex items-center justify-center">
-                <Plane className="w-32 h-32 text-primary/40" />
+            <div className="relative animate-fade-up hidden lg:block" style={{ animationDelay: "0.2s" }}>
+              <div className="w-full h-64 lg:h-96 bg-gradient-to-br from-primary/20 to-secondary/20 rounded-2xl shadow-lg flex items-center justify-center">
+                <Plane className="w-24 h-24 lg:w-32 lg:h-32 text-primary/40" />
               </div>
             </div>
           </div>
@@ -168,19 +168,19 @@ export default function Index() {
             </p>
           </div>
           
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8">
             {howItWorks.map((step, index) => (
               <div 
                 key={step.title} 
                 className="relative group"
               >
-                <div className="bg-background p-8 rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 h-full">
-                  <div className="w-14 h-14 gradient-hero rounded-xl flex items-center justify-center mb-6 group-hover:shadow-glow transition-shadow">
-                    <step.icon className="w-7 h-7 text-primary-foreground" />
+                <div className="bg-background p-6 sm:p-8 rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 h-full">
+                  <div className="w-12 h-12 sm:w-14 sm:h-14 gradient-hero rounded-xl flex items-center justify-center mb-4 sm:mb-6 group-hover:shadow-glow transition-shadow">
+                    <step.icon className="w-6 h-6 sm:w-7 sm:h-7 text-primary-foreground" />
                   </div>
-                  <div className="text-sm font-bold text-primary mb-2">Шаг {index + 1}</div>
-                  <h3 className="text-xl font-bold text-foreground mb-3">{step.title}</h3>
-                  <p className="text-muted-foreground">{step.description}</p>
+                  <div className="text-xs sm:text-sm font-bold text-primary mb-2">Шаг {index + 1}</div>
+                  <h3 className="text-lg sm:text-xl font-bold text-foreground mb-2 sm:mb-3">{step.title}</h3>
+                  <p className="text-muted-foreground text-sm sm:text-base">{step.description}</p>
                 </div>
                 {index < howItWorks.length - 1 && (
                   <div className="hidden lg:block absolute top-1/2 -right-4 transform -translate-y-1/2">
@@ -260,25 +260,25 @@ export default function Index() {
             </p>
           </div>
           
-          <div className="grid md:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
             {testimonials.map((testimonial) => (
               <div 
                 key={testimonial.name} 
-                className="bg-background p-8 rounded-2xl shadow-sm hover:shadow-md transition-shadow"
+                className="bg-background p-6 sm:p-8 rounded-2xl shadow-sm hover:shadow-md transition-shadow"
               >
-                <div className="flex items-center gap-1 mb-4">
+                <div className="flex items-center gap-1 mb-3 sm:mb-4">
                   {[...Array(testimonial.rating)].map((_, i) => (
-                    <Star key={i} className="w-5 h-5 fill-secondary text-secondary" />
+                    <Star key={i} className="w-4 h-4 sm:w-5 sm:h-5 fill-secondary text-secondary" />
                   ))}
                 </div>
-                <p className="text-foreground mb-6 leading-relaxed">"{testimonial.text}"</p>
+                <p className="text-foreground mb-4 sm:mb-6 leading-relaxed text-sm sm:text-base">"{testimonial.text}"</p>
                 <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 gradient-hero rounded-full flex items-center justify-center text-primary-foreground font-bold">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 gradient-hero rounded-full flex items-center justify-center text-primary-foreground font-bold text-sm sm:text-base">
                     {testimonial.avatar}
                   </div>
                   <div>
-                    <div className="font-bold text-foreground">{testimonial.name}</div>
-                    <div className="text-muted-foreground text-sm">{testimonial.role}</div>
+                    <div className="font-bold text-foreground text-sm sm:text-base">{testimonial.name}</div>
+                    <div className="text-muted-foreground text-xs sm:text-sm">{testimonial.role}</div>
                   </div>
                 </div>
               </div>

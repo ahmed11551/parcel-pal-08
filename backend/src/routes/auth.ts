@@ -49,12 +49,19 @@ router.post('/register/send-code', async (req, res) => {
     // Send SMS
     await sendSMS(phone, code);
 
-    // Store name temporarily (in production, use Redis or session)
-    res.json({ 
+    // В development режиме возвращаем код для тестирования
+    const response: any = { 
       success: true, 
       message: 'Code sent',
-      tempName: name // For development only
-    });
+    };
+
+    // В development режиме возвращаем код (только для разработки!)
+    if (process.env.NODE_ENV === 'development' || process.env.SMS_PROVIDER === 'mock') {
+      response.code = code; // Только в development!
+      response.devMode = true;
+    }
+
+    res.json(response);
   } catch (error: any) {
     if (error instanceof z.ZodError) {
       return res.status(400).json({ error: 'Invalid input', details: error.errors });
@@ -144,7 +151,18 @@ router.post('/login/send-code', async (req, res) => {
 
     await sendSMS(phone, code);
 
-    res.json({ success: true, message: 'Code sent' });
+    const response: any = { 
+      success: true, 
+      message: 'Code sent',
+    };
+
+    // В development режиме возвращаем код для тестирования
+    if (process.env.NODE_ENV === 'development' || process.env.SMS_PROVIDER === 'mock') {
+      response.code = code; // Только в development!
+      response.devMode = true;
+    }
+
+    res.json(response);
   } catch (error: any) {
     if (error instanceof z.ZodError) {
       return res.status(400).json({ error: 'Invalid input', details: error.errors });

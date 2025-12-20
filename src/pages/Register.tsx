@@ -5,6 +5,7 @@ import { useState } from "react";
 import { Phone, User, ArrowRight, Shield, CheckCircle2, Loader2 } from "lucide-react";
 import { api } from "@/lib/api";
 import { toast } from "sonner";
+import { formatPhoneForAPI, validatePhone, normalizePhone } from "@/utils/phone";
 
 export default function RegisterPage() {
   const navigate = useNavigate();
@@ -21,14 +22,29 @@ export default function RegisterPage() {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
+  const [devCode, setDevCode] = useState<string>("");
+
   const handleSendCode = async () => {
-    if (!formData.name || formData.phone.length < 10 || !agreedToTerms) return;
+    if (!formData.name || !validatePhone(formData.phone) || !agreedToTerms) {
+      if (!validatePhone(formData.phone)) {
+        toast.error("Введите корректный номер телефона");
+      }
+      return;
+    }
     
     setLoading(true);
     try {
-      await api.registerSendCode(formData.phone, formData.name);
+      const formattedPhone = formatPhoneForAPI(formData.phone);
+      const response = await api.registerSendCode(formattedPhone, formData.name);
       setStep("verify");
-      toast.success("Код отправлен на ваш номер");
+      
+      // В development режиме показываем код
+      if (response.devMode && response.code) {
+        setDevCode(response.code);
+        toast.success(`Код отправлен! (Dev режим: ${response.code})`, { duration: 10000 });
+      } else {
+        toast.success("Код отправлен на ваш номер");
+      }
     } catch (error: any) {
       toast.error(error.message || "Ошибка при отправке кода");
     } finally {
@@ -41,7 +57,8 @@ export default function RegisterPage() {
     
     setLoading(true);
     try {
-      await api.registerVerify(formData.phone, code, formData.name);
+      const formattedPhone = formatPhoneForAPI(formData.phone);
+      await api.registerVerify(formattedPhone, code, formData.name);
       toast.success("Регистрация успешна!");
       navigate("/tasks");
     } catch (error: any) {
@@ -98,8 +115,13 @@ export default function RegisterPage() {
                       type="tel"
                       placeholder="+7 (999) 123-45-67"
                       value={formData.phone}
-                      onChange={(e) => handleInputChange("phone", e.target.value)}
-                      className="w-full pl-12 pr-4 py-3 bg-background border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary"
+                      onChange={(e) => {
+                        let value = e.target.value;
+                        // Разрешаем только цифры, +, пробелы, скобки, дефисы
+                        value = value.replace(/[^\d+\s()\-]/g, '');
+                        handleInputChange("phone", value);
+                      }}
+                      className="w-full pl-12 pr-4 py-3 bg-background border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary text-base"
                     />
                   </div>
                 </div>
@@ -127,7 +149,7 @@ export default function RegisterPage() {
                   size="lg"
                   className="w-full"
                   onClick={handleSendCode}
-                  disabled={!formData.name || formData.phone.length < 10 || !agreedToTerms || loading}
+                  disabled={!formData.name || !validatePhone(formData.phone) || !agreedToTerms || loading}
                 >
                   {loading ? (
                     <>
@@ -159,6 +181,13 @@ export default function RegisterPage() {
                   <p className="text-sm text-muted-foreground mt-2 text-center">
                     Код отправлен на {formData.phone}
                   </p>
+                  {devCode && (
+                    <div className="mt-4 p-3 bg-primary/10 border border-primary/20 rounded-lg">
+                      <p className="text-xs text-primary font-mono text-center">
+                        Dev режим: Код - {devCode}
+                      </p>
+                    </div>
+                  )}
                 </div>
 
                 <Button 

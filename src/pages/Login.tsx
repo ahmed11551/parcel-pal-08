@@ -5,6 +5,7 @@ import { useState } from "react";
 import { Phone, ArrowRight, Shield, Loader2 } from "lucide-react";
 import { api } from "@/lib/api";
 import { toast } from "sonner";
+import { formatPhoneForAPI, validatePhone, normalizePhone } from "@/utils/phone";
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -12,15 +13,28 @@ export default function LoginPage() {
   const [code, setCode] = useState("");
   const [step, setStep] = useState<"phone" | "code">("phone");
   const [loading, setLoading] = useState(false);
+  const [devCode, setDevCode] = useState<string>("");
 
   const handleSendCode = async () => {
-    if (phone.length < 10) return;
+    const normalized = normalizePhone(phone);
+    if (!validatePhone(phone)) {
+      toast.error("Введите корректный номер телефона");
+      return;
+    }
     
     setLoading(true);
     try {
-      await api.loginSendCode(phone);
+      const formattedPhone = formatPhoneForAPI(phone);
+      const response = await api.loginSendCode(formattedPhone);
       setStep("code");
-      toast.success("Код отправлен на ваш номер");
+      
+      // В development режиме показываем код
+      if (response.devMode && response.code) {
+        setDevCode(response.code);
+        toast.success(`Код отправлен! (Dev режим: ${response.code})`, { duration: 10000 });
+      } else {
+        toast.success("Код отправлен на ваш номер");
+      }
     } catch (error: any) {
       toast.error(error.message || "Ошибка при отправке кода");
     } finally {
@@ -33,7 +47,8 @@ export default function LoginPage() {
     
     setLoading(true);
     try {
-      await api.loginVerify(phone, code);
+      const formattedPhone = formatPhoneForAPI(phone);
+      await api.loginVerify(formattedPhone, code);
       toast.success("Вход выполнен успешно");
       navigate("/tasks");
     } catch (error: any) {
@@ -74,8 +89,13 @@ export default function LoginPage() {
                       type="tel"
                       placeholder="+7 (999) 123-45-67"
                       value={phone}
-                      onChange={(e) => setPhone(e.target.value)}
-                      className="w-full pl-12 pr-4 py-3 bg-background border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary text-lg"
+                      onChange={(e) => {
+                        let value = e.target.value;
+                        // Разрешаем только цифры, +, пробелы, скобки, дефисы
+                        value = value.replace(/[^\d+\s()\-]/g, '');
+                        setPhone(value);
+                      }}
+                      className="w-full pl-12 pr-4 py-3 bg-background border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary text-base sm:text-lg"
                     />
                   </div>
                 </div>
@@ -84,7 +104,7 @@ export default function LoginPage() {
                   size="lg"
                   className="w-full"
                   onClick={handleSendCode}
-                  disabled={phone.length < 10 || loading}
+                  disabled={!validatePhone(phone) || loading}
                 >
                   {loading ? (
                     <>
@@ -116,6 +136,13 @@ export default function LoginPage() {
                   <p className="text-sm text-muted-foreground mt-2 text-center">
                     Код отправлен на {phone}
                   </p>
+                  {devCode && (
+                    <div className="mt-4 p-3 bg-primary/10 border border-primary/20 rounded-lg">
+                      <p className="text-xs text-primary font-mono text-center">
+                        Dev режим: Код - {devCode}
+                      </p>
+                    </div>
+                  )}
                 </div>
 
                 <Button 

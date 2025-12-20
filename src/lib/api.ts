@@ -42,7 +42,7 @@ class ApiClient {
 
   // Auth
   async registerSendCode(phone: string, name: string) {
-    return this.request<{ success: boolean; message: string; tempName?: string }>(
+    return this.request<{ success: boolean; message: string; tempName?: string; code?: string; devMode?: boolean }>(
       '/auth/register/send-code',
       {
         method: 'POST',
@@ -70,7 +70,7 @@ class ApiClient {
   }
 
   async loginSendCode(phone: string) {
-    return this.request<{ success: boolean; message: string }>(
+    return this.request<{ success: boolean; message: string; code?: string; devMode?: boolean }>(
       '/auth/login/send-code',
       {
         method: 'POST',

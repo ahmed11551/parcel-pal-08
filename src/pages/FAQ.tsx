@@ -106,10 +106,10 @@ export default function FAQPage() {
           </div>
 
           {/* FAQ Categories */}
-          <div className="space-y-8 mb-12">
+          <div className="space-y-6 sm:space-y-8 mb-8 sm:mb-12">
             {faqCategories.map((category) => (
-              <div key={category.title} className="bg-card rounded-2xl shadow-md p-6 md:p-8">
-                <h2 className="text-2xl font-bold text-foreground mb-6">{category.title}</h2>
+              <div key={category.title} className="bg-card rounded-2xl shadow-md p-4 sm:p-6 md:p-8">
+                <h2 className="text-xl sm:text-2xl font-bold text-foreground mb-4 sm:mb-6">{category.title}</h2>
                 <Accordion type="single" collapsible className="w-full">
                   {category.items.map((item, index) => (
                     <AccordionItem key={index} value={`item-${index}`}>
