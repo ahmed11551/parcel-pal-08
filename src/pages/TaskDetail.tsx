@@ -88,9 +88,9 @@ export default function TaskDetailPage() {
 
   return (
     <Layout>
-      <div className="gradient-subtle min-h-screen py-12">
-        <div className="container max-w-4xl">
-          <Link to="/tasks" className="text-muted-foreground hover:text-foreground mb-6 inline-block">
+      <div className="gradient-subtle min-h-screen py-6 sm:py-8 md:py-12">
+        <div className="container max-w-4xl px-4">
+          <Link to="/tasks" className="text-muted-foreground hover:text-foreground mb-4 sm:mb-6 inline-block text-sm sm:text-base">
             ← Назад к заданиям
           </Link>
 

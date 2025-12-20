@@ -122,48 +122,48 @@ export default function TasksPage() {
     <Layout>
       <div className="gradient-subtle min-h-screen">
         {/* Header */}
-        <section className="py-12 md:py-16">
-          <div className="container">
-            <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
+        <section className="py-8 sm:py-10 md:py-12 lg:py-16">
+          <div className="container px-4">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-foreground mb-3 sm:mb-4">
               Доступные задания
             </h1>
-            <p className="text-muted-foreground text-lg mb-8">
+            <p className="text-muted-foreground text-base sm:text-lg mb-6 sm:mb-8">
               Найдите подходящее задание по вашему маршруту и заработайте
             </p>
 
             {/* Filters */}
-            <div className="bg-card p-6 rounded-2xl shadow-sm">
-              <div className="grid md:grid-cols-3 gap-4">
+            <div className="bg-card p-4 sm:p-6 rounded-2xl shadow-sm">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
                 <div className="relative">
-                  <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                  <MapPin className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground" />
                   <input
                     type="text"
                     placeholder="Откуда"
                     value={searchFrom}
                     onChange={(e) => setSearchFrom(e.target.value)}
-                    className="w-full pl-12 pr-4 py-3 bg-background border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary"
+                    className="w-full pl-10 sm:pl-12 pr-3 sm:pr-4 py-2.5 sm:py-3 bg-background border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary text-sm sm:text-base"
                   />
                 </div>
                 <div className="relative">
-                  <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                  <MapPin className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground" />
                   <input
                     type="text"
                     placeholder="Куда"
                     value={searchTo}
                     onChange={(e) => setSearchTo(e.target.value)}
-                    className="w-full pl-12 pr-4 py-3 bg-background border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary"
+                    className="w-full pl-10 sm:pl-12 pr-3 sm:pr-4 py-2.5 sm:py-3 bg-background border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary text-sm sm:text-base"
                   />
                 </div>
-                <Button size="lg" className="w-full" onClick={handleSearch} disabled={isLoading}>
+                <Button size="lg" className="w-full sm:col-span-2 md:col-span-1" onClick={handleSearch} disabled={isLoading}>
                   {isLoading ? (
                     <>
-                      <Loader2 className="w-5 h-5 animate-spin" />
+                      <Loader2 className="w-4 h-4 sm:w-5 sm:h-5 animate-spin" />
                       Поиск...
                     </>
                   ) : (
                     <>
-                  <Search className="w-5 h-5" />
-                  Найти задания
+                      <Search className="w-4 h-4 sm:w-5 sm:h-5" />
+                      Найти задания
                     </>
                   )}
                 </Button>
@@ -173,13 +173,13 @@ export default function TasksPage() {
         </section>
 
         {/* Tasks List */}
-        <section className="pb-20">
-          <div className="container">
-            <div className="flex items-center justify-between mb-6">
-              <p className="text-muted-foreground">
+        <section className="pb-12 sm:pb-16 md:pb-20">
+          <div className="container px-4">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4 mb-4 sm:mb-6">
+              <p className="text-muted-foreground text-sm sm:text-base">
                 Найдено <span className="font-semibold text-foreground">{tasks.length}</span> заданий
               </p>
-              <Button variant="ghost" size="sm">
+              <Button variant="ghost" size="sm" className="w-full sm:w-auto">
                 <Filter className="w-4 h-4" />
                 Фильтры
               </Button>
