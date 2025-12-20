@@ -7,8 +7,8 @@ WORKDIR /app
 COPY package*.json ./
 COPY tsconfig.json ./
 
-# Install dependencies
-RUN npm install
+# Install dependencies (без postinstall, так как src еще не скопирован)
+RUN npm install --ignore-scripts
 
 # Copy source code
 COPY src ./src
