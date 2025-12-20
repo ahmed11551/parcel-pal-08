@@ -43,10 +43,10 @@ else
     echo -e "${GREEN}✅ Nginx уже установлен${NC}"
 fi
 
-# Создание конфигурации Nginx
-echo "📝 Создание конфигурации Nginx..."
+# Создание временной конфигурации Nginx (только HTTP для certbot)
+echo "📝 Создание временной конфигурации Nginx..."
 cat > /etc/nginx/sites-available/send-buddy << 'NGINX_CONFIG'
-# HTTP -> HTTPS редирект
+# Временная конфигурация для получения SSL сертификата
 server {
     listen 80;
     listen [::]:80;
@@ -57,18 +57,39 @@ server {
     }
 
     location / {
-        return 301 https://$server_name$request_uri;
+        proxy_pass http://localhost:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_cache_bypass $http_upgrade;
+    }
+
+    location /api {
+        proxy_pass http://localhost:3001;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        client_max_body_size 10M;
+    }
+
+    location /uploads {
+        proxy_pass http://localhost:3001;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        expires 30d;
+        add_header Cache-Control "public, immutable";
     }
 }
-
-# HTTPS сервер (SSL будет добавлен certbot)
-server {
-    listen 443 ssl http2;
-    listen [::]:443 ssl http2;
-    server_name send-buddy.ru www.send-buddy.ru;
-
-    ssl_certificate /etc/letsencrypt/live/send-buddy.ru/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/send-buddy.ru/privkey.pem;
+NGINX_CONFIG
     
     ssl_protocols TLSv1.2 TLSv1.3;
     ssl_ciphers HIGH:!aNULL:!MD5;
