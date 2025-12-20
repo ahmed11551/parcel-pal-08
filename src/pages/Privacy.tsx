@@ -6,15 +6,15 @@ import { Shield, ArrowLeft } from "lucide-react";
 export default function PrivacyPage() {
   return (
     <Layout>
-      <div className="container py-12 max-w-4xl">
-        <Button variant="ghost" asChild className="mb-6">
+      <div className="container py-6 sm:py-8 md:py-12 max-w-4xl px-4">
+        <Button variant="ghost" asChild className="mb-4 sm:mb-6">
           <Link to="/">
             <ArrowLeft className="w-4 h-4 mr-2" />
             На главную
           </Link>
         </Button>
 
-        <div className="bg-card rounded-lg border p-8 shadow-sm">
+        <div className="bg-card rounded-lg border p-4 sm:p-6 md:p-8 shadow-sm">
           <div className="flex items-center gap-3 mb-6">
             <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
               <Shield className="w-6 h-6 text-primary" />

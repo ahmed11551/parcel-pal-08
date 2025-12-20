@@ -67,16 +67,16 @@ const allowedItems = [
 export default function SafetyPage() {
   return (
     <Layout>
-      <div className="gradient-subtle min-h-screen py-12">
-        <div className="container max-w-4xl">
-          <div className="text-center mb-16">
-            <div className="w-20 h-20 gradient-hero rounded-2xl flex items-center justify-center mx-auto mb-6">
-              <Shield className="w-10 h-10 text-primary-foreground" />
+      <div className="gradient-subtle min-h-screen py-6 sm:py-8 md:py-12">
+        <div className="container max-w-4xl px-4">
+          <div className="text-center mb-8 sm:mb-12 md:mb-16">
+            <div className="w-16 h-16 sm:w-20 sm:h-20 gradient-hero rounded-2xl flex items-center justify-center mx-auto mb-4 sm:mb-6">
+              <Shield className="w-8 h-8 sm:w-10 sm:h-10 text-primary-foreground" />
             </div>
-            <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-4">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-foreground mb-3 sm:mb-4">
               Безопасность
             </h1>
-            <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
+            <p className="text-muted-foreground text-sm sm:text-base md:text-lg max-w-2xl mx-auto">
               Ваша безопасность — наш приоритет. Мы используем современные технологии для защиты всех участников платформы.
             </p>
           </div>

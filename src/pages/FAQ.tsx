@@ -127,17 +127,17 @@ export default function FAQPage() {
           </div>
 
           {/* Contact Support */}
-          <div className="bg-card rounded-2xl shadow-md p-8 text-center">
-            <h2 className="text-2xl font-bold text-foreground mb-4">
+          <div className="bg-card rounded-2xl shadow-md p-6 sm:p-8 text-center">
+            <h2 className="text-xl sm:text-2xl font-bold text-foreground mb-3 sm:mb-4">
               Не нашли ответ?
             </h2>
-            <p className="text-muted-foreground mb-6">
+            <p className="text-muted-foreground mb-4 sm:mb-6 text-sm sm:text-base">
               Свяжитесь с нашей службой поддержки
             </p>
-            <Button size="lg" variant="outline" asChild>
+            <Button size="lg" variant="outline" asChild className="w-full sm:w-auto">
               <Link to="/">
                 Написать в поддержку
-                <ArrowRight className="w-5 h-5" />
+                <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5" />
               </Link>
             </Button>
           </div>

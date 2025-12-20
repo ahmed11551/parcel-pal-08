@@ -78,15 +78,15 @@ export function Footer() {
           </div>
         </div>
 
-        <div className="border-t border-background/10 mt-12 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
-          <p className="text-background/40 text-sm">
+        <div className="border-t border-background/10 mt-8 sm:mt-12 pt-6 sm:pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
+          <p className="text-background/40 text-xs sm:text-sm text-center md:text-left">
             © 2025-2026 SendBuddy. Все права защищены. Sebiev IT Group.
           </p>
-          <div className="flex gap-6">
-            <a href="#" className="text-background/40 hover:text-background transition-colors text-sm">
+          <div className="flex gap-4 sm:gap-6">
+            <a href="#" className="text-background/40 hover:text-background transition-colors text-xs sm:text-sm">
               Telegram
             </a>
-            <a href="#" className="text-background/40 hover:text-background transition-colors text-sm">
+            <a href="#" className="text-background/40 hover:text-background transition-colors text-xs sm:text-sm">
               VK
             </a>
           </div>
