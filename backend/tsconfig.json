@@ -15,7 +15,7 @@
     "declarationMap": true,
     "sourceMap": true
   },
-  "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist"]
+  "include": ["src/index.ts", "src/db/**/*", "src/routes/**/*", "src/middleware/**/*", "src/utils/**/*"],
+  "exclude": ["node_modules", "dist", "src/admin/**/*", "src/auth/**/*", "src/chat/**/*", "src/orders/**/*", "src/payments/**/*", "src/reviews/**/*", "src/tasks/**/*", "src/users/**/*", "src/files/**/*", "src/app.*", "src/main.ts", "src/config/**/*", "src/common/**/*"]
 }
 
