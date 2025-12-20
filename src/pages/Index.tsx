@@ -13,7 +13,6 @@ import {
   CreditCard,
   MessageCircle
 } from "lucide-react";
-import heroImage from "@/assets/hero-illustration.png";
 
 const stats = [
   { value: "10K+", label: "Успешных доставок" },
@@ -135,11 +134,9 @@ export default function Index() {
             </div>
             
             <div className="relative animate-fade-up" style={{ animationDelay: "0.2s" }}>
-              <img 
-                src={heroImage} 
-                alt="SendBuddy - P2P доставка" 
-                className="w-full rounded-2xl shadow-lg"
-              />
+              <div className="w-full h-96 bg-gradient-to-br from-primary/20 to-secondary/20 rounded-2xl shadow-lg flex items-center justify-center">
+                <Plane className="w-32 h-32 text-primary/40" />
+              </div>
             </div>
           </div>
           
