@@ -94,12 +94,6 @@ const mockTasks = [
   },
 ];
 
-const sizeLabels: Record<string, string> = {
-  S: "Маленький",
-  M: "Средний",
-  L: "Большой",
-};
-
 export default function TasksPage() {
   const [searchFrom, setSearchFrom] = useState("");
   const [searchTo, setSearchTo] = useState("");
