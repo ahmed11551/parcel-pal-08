@@ -131,6 +131,20 @@ export default function Index() {
                   </Link>
                 </Button>
               </div>
+              
+              {/* Telegram CTA */}
+              <div className="mt-6 flex items-center justify-center gap-3 text-sm text-muted-foreground">
+                <MessageCircle className="w-4 h-4" />
+                <span>Или используйте наш</span>
+                <a 
+                  href="https://t.me/SendBuddyExpress_Bot" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-primary hover:underline font-medium"
+                >
+                  Telegram бот
+                </a>
+              </div>
             </div>
             
             <div className="relative animate-fade-up hidden lg:block" style={{ animationDelay: "0.2s" }}>
@@ -296,7 +310,22 @@ export default function Index() {
           <p className="text-primary-foreground/80 text-lg mb-8 max-w-2xl mx-auto">
             Присоединяйтесь к тысячам пользователей, которые уже используют SendBuddy для быстрой и безопасной доставки
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+            <Button 
+              size="xl" 
+              variant="hero-outline" 
+              asChild
+              className="bg-white/10 hover:bg-white/20 border-white/30"
+            >
+              <a 
+                href="https://t.me/SendBuddyExpress_Bot" 
+                target="_blank" 
+                rel="noopener noreferrer"
+              >
+                <MessageCircle className="w-5 h-5 mr-2" />
+                Открыть в Telegram
+              </a>
+            </Button>
             <Button size="xl" variant="hero-outline" asChild>
               <Link to="/register">
                 Создать аккаунт
@@ -304,6 +333,9 @@ export default function Index() {
               </Link>
             </Button>
           </div>
+          <p className="text-primary-foreground/60 text-sm mt-6">
+            Рекомендуем использовать Telegram бота для более удобного опыта
+          </p>
         </div>
       </section>
     </Layout>
