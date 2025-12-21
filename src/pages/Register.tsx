@@ -101,7 +101,11 @@ export default function RegisterPage() {
                     href="https://t.me/SendBuddyExpress_Bot"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-xs text-primary hover:underline font-medium"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      window.open('https://t.me/SendBuddyExpress_Bot', '_blank', 'noopener,noreferrer');
+                    }}
+                    className="text-xs text-primary hover:underline font-medium cursor-pointer"
                   >
                     Открыть бота в Telegram →
                   </a>

@@ -140,7 +140,11 @@ export default function Index() {
                   href="https://t.me/SendBuddyExpress_Bot" 
                   target="_blank" 
                   rel="noopener noreferrer"
-                  className="text-primary hover:underline font-medium"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    window.open('https://t.me/SendBuddyExpress_Bot', '_blank', 'noopener,noreferrer');
+                  }}
+                  className="text-primary hover:underline font-medium cursor-pointer"
                 >
                   Telegram бот
                 </a>
