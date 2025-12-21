@@ -45,6 +45,7 @@ export async function createTables() {
         date_to DATE NOT NULL,
         reward INTEGER NOT NULL,
         status VARCHAR(20) DEFAULT 'active' CHECK (status IN ('active', 'assigned', 'in_transit', 'delivered', 'cancelled')),
+        deleted_at TIMESTAMP,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )

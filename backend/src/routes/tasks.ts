@@ -69,6 +69,9 @@ router.get('/', optionalAuth, async (req: AuthRequest, res) => {
       query += ` AND t.status = 'active'`;
     }
 
+    // Exclude soft-deleted tasks from main listing
+    query += ` AND t.deleted_at IS NULL`;
+
     if (minReward) {
       query += ` AND t.reward >= $${paramCount}`;
       params.push(parseInt(minReward as string));
