@@ -42,3 +42,7 @@ backend/node_modules
 
 # Server access (содержит пароли!)
 SERVER_ACCESS.md
+
+# Backup files
+*.backup
+*~

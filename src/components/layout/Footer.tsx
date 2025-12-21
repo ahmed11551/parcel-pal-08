@@ -68,11 +68,15 @@ export function Footer() {
             <ul className="space-y-3">
               <li className="flex items-center gap-2 text-background/60 text-sm">
                 <Mail className="w-4 h-4" />
-                support@sendbuddy.app
+                <a href="mailto:sebiev9595@bk.ru" className="hover:text-background transition-colors">
+                  sebiev9595@bk.ru
+                </a>
               </li>
               <li className="flex items-center gap-2 text-background/60 text-sm">
                 <Phone className="w-4 h-4" />
-                +7 (800) 123-45-67
+                <a href="tel:+79259409404" className="hover:text-background transition-colors">
+                  +7 (925) 940-94-04
+                </a>
               </li>
             </ul>
           </div>

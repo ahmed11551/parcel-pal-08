@@ -9,6 +9,7 @@ import userRoutes from './routes/users.js';
 import uploadRoutes from './routes/upload.js';
 import telegramRoutes from './routes/telegram.js';
 import { logger, metrics } from './utils/logger.js';
+import { securityHeaders, sanitizeError } from './middleware/security.js';
 
 dotenv.config();
 
@@ -25,10 +26,29 @@ if (missingVars.length > 0) {
 const app = express();
 const PORT = Number(process.env.PORT) || 3001;
 
-// Middleware
+// Security headers
+app.use(securityHeaders);
+
+// CORS configuration
+const allowedOrigins = [
+  process.env.FRONTEND_URL || 'http://localhost:8080',
+  'https://send-buddy.ru',
+  'https://web.telegram.org', // Telegram Web App
+  'https://telegram.org', // Telegram Web App fallback
+];
+
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:8080',
-  credentials: true
+  origin: (origin, callback) => {
+    // Allow requests with no origin (like mobile apps, curl, Postman, or Telegram Web App)
+    if (!origin || allowedOrigins.includes(origin) || origin.includes('telegram.org')) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
 }));
 
 // Структурированное логирование HTTP запросов
@@ -100,9 +120,14 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
     statusCode: err.status || 500,
   }, 'Request error');
   
+  const errorMessage = sanitizeError(err);
+  
   res.status(err.status || 500).json({
-    error: err.message || 'Internal server error',
-    ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
+    error: errorMessage,
+    ...(process.env.NODE_ENV === 'development' && { 
+      stack: err.stack,
+      details: err.message !== errorMessage ? err.message : undefined
+    })
   });
 });
 

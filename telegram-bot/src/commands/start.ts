@@ -1,40 +1,92 @@
 import { Context } from 'telegraf';
 import { MINI_APP_URL } from '../index.js';
+import telegramAPI from '../utils/api.js';
 
 export const startCommand = async (ctx: Context) => {
+  const telegramId = ctx.from?.id;
   const firstName = ctx.from?.first_name || 'Пользователь';
-  
-  await ctx.reply(
-    `👋 Привет, ${firstName}!\n\n` +
-    `Добро пожаловать в *SendBuddy* — платформу для передачи посылок через путешественников.\n\n` +
-    `🚀 *Что я умею:*\n` +
-    `• Открыть приложение SendBuddy\n` +
-    `• Помочь с вопросами\n` +
-    `• Связать с поддержкой\n` +
-    `• Оставить отзыв\n` +
-    `• Подписаться на уведомления\n\n` +
-    `Используйте /help для списка команд.`,
-    {
-      parse_mode: 'Markdown',
-      reply_markup: {
-        inline_keyboard: [
-          [
-            {
-              text: '🚀 Открыть SendBuddy',
-              web_app: { url: MINI_APP_URL }
-            }
-          ],
-          [
-            { text: '❓ Помощь', callback_data: 'help' },
-            { text: '💬 Поддержка', callback_data: 'support' }
-          ],
-          [
-            { text: '⭐ Оставить отзыв', callback_data: 'review' },
-            { text: '🔔 Подписаться', callback_data: 'subscribe' }
-          ]
-        ]
-      }
+  const lastName = ctx.from?.last_name;
+  const username = ctx.from?.username;
+
+  if (!telegramId) {
+    await ctx.reply('❌ Ошибка: не удалось получить данные пользователя');
+    return;
+  }
+
+  // Авторизуем пользователя автоматически
+  try {
+    const authResult = await telegramAPI.authSimple(
+      telegramId,
+      firstName,
+      lastName,
+      username
+    );
+
+    if (authResult.success) {
+      await ctx.reply(
+        `✅ *Вы успешно авторизованы!*\n\n` +
+        `👋 Привет, ${firstName}!\n\n` +
+        `Добро пожаловать в *SendBuddy* — платформу для передачи посылок через путешественников.\n\n` +
+        `🚀 *Что я умею:*\n` +
+        `• Открыть приложение SendBuddy\n` +
+        `• Помочь с вопросами\n` +
+        `• Связать с поддержкой\n` +
+        `• Оставить отзыв\n` +
+        `• Подписаться на уведомления\n\n` +
+        `Используйте /help для списка команд.`,
+        {
+          parse_mode: 'Markdown',
+          reply_markup: {
+            inline_keyboard: [
+              [
+                {
+                  text: '🚀 Открыть SendBuddy',
+                  web_app: { url: MINI_APP_URL }
+                }
+              ],
+              [
+                { text: '❓ Помощь', callback_data: 'help' },
+                { text: '💬 Поддержка', callback_data: 'support' }
+              ],
+              [
+                { text: '⭐ Оставить отзыв', callback_data: 'review' },
+                { text: '🔔 Подписаться', callback_data: 'subscribe' }
+              ]
+            ]
+          }
+        }
+      );
+    } else {
+      throw new Error('Auth failed');
     }
-  );
+  } catch (error: any) {
+    console.error('Auth error:', error);
+    const errorMessage = error?.response?.data?.error || error?.message || 'Неизвестная ошибка';
+    
+    await ctx.reply(
+      `👋 Привет, ${firstName}!\n\n` +
+      `Добро пожаловать в *SendBuddy*!\n\n` +
+      `⚠️ Произошла ошибка при авторизации: ${errorMessage}\n\n` +
+      `Попробуйте авторизоваться еще раз или обратитесь в поддержку.\n\n` +
+      `Используйте /help для списка команд.`,
+      {
+        parse_mode: 'Markdown',
+        reply_markup: {
+          inline_keyboard: [
+            [
+              {
+                text: '🔐 Авторизоваться',
+                callback_data: 'auth'
+              }
+            ],
+            [
+              { text: '❓ Помощь', callback_data: 'help' },
+              { text: '💬 Поддержка', callback_data: 'support' }
+            ]
+          ]
+        }
+      }
+    );
+  }
 };
 

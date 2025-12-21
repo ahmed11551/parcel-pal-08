@@ -3,6 +3,8 @@ import { pool } from '../db/index.js';
 import { authenticateToken, AuthRequest } from '../middleware/auth.js';
 import { validateTelegramInitData } from '../utils/telegram.js';
 import { z } from 'zod';
+import jwt from 'jsonwebtoken';
+import { logger } from '../utils/logger.js';
 
 const router = express.Router();
 
@@ -31,6 +33,194 @@ const reviewSchema = z.object({
   telegramId: z.number().int().positive(),
   rating: z.number().int().min(1).max(5),
   text: z.string().max(1000).optional(),
+});
+
+/**
+ * POST /api/telegram/auth/simple
+ * Простая авторизация через Telegram ID (для бота)
+ * Создает пользователя автоматически, если его нет
+ * 
+ * Примечание: Если пользователь уже зарегистрирован по телефону,
+ * он может связать аккаунт через /api/telegram/link после авторизации в веб-приложении
+ */
+router.post('/auth/simple', async (req, res) => {
+  try {
+    const { telegramId, firstName, lastName, username } = z.object({
+      telegramId: z.number().int().positive(),
+      firstName: z.string().min(1),
+      lastName: z.string().optional(),
+      username: z.string().optional(),
+    }).parse(req.body);
+
+    // Проверяем, есть ли уже запись telegram_users
+    let telegramUserRecord = await pool.query(
+      'SELECT * FROM telegram_users WHERE telegram_id = $1',
+      [telegramId]
+    );
+
+    let telegramUserData;
+    if (telegramUserRecord.rows.length === 0) {
+      // Создаем запись telegram_users
+      await pool.query(
+        `INSERT INTO telegram_users (telegram_id, username, first_name, last_name)
+         VALUES ($1, $2, $3, $4)`,
+        [telegramId, username || null, firstName, lastName || null]
+      );
+      
+      telegramUserRecord = await pool.query(
+        'SELECT * FROM telegram_users WHERE telegram_id = $1',
+        [telegramId]
+      );
+      telegramUserData = telegramUserRecord.rows[0];
+    } else {
+      // Обновляем данные
+      await pool.query(
+        `UPDATE telegram_users 
+         SET username = $1, first_name = $2, last_name = $3, updated_at = CURRENT_TIMESTAMP
+         WHERE telegram_id = $4`,
+        [username || null, firstName, lastName || null, telegramId]
+      );
+      
+      telegramUserRecord = await pool.query(
+        'SELECT * FROM telegram_users WHERE telegram_id = $1',
+        [telegramId]
+      );
+      telegramUserData = telegramUserRecord.rows[0];
+    }
+
+    // Если пользователь уже связан с аккаунтом, возвращаем JWT токен
+    if (telegramUserData.user_id) {
+      const token = jwt.sign(
+        { userId: telegramUserData.user_id },
+        process.env.JWT_SECRET!,
+        { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
+      );
+
+      const userResult = await pool.query(
+        'SELECT id, phone, name, rating, deliveries_count FROM users WHERE id = $1',
+        [telegramUserData.user_id]
+      );
+
+      if (userResult.rows.length === 0) {
+        logger.warn({ telegramId, userId: telegramUserData.user_id }, 'User linked to telegram not found');
+        // Разрываем связь и создаем нового пользователя
+        await pool.query(
+          'UPDATE telegram_users SET user_id = NULL WHERE telegram_id = $1',
+          [telegramId]
+        );
+        // Продолжаем создание нового пользователя ниже
+      } else {
+        logger.info({ telegramId, userId: telegramUserData.user_id }, 'Telegram user authenticated');
+        return res.json({
+          success: true,
+          token,
+          user: userResult.rows[0],
+          telegramUser: {
+            id: telegramId,
+            username,
+            first_name: firstName,
+          },
+        });
+      }
+    }
+
+    // Если пользователя нет, создаем его автоматически
+    // Используем виртуальный телефон формата +79990000000{last9digits}
+    // Это обеспечивает валидный формат телефона и уникальность
+    const telegramIdStr = String(telegramId);
+    const last9Digits = telegramIdStr.slice(-9).padStart(9, '0');
+    const virtualPhone = `+7999000${last9Digits}`;
+    const userName = lastName ? `${firstName} ${lastName}`.trim() : firstName;
+
+    // Проверяем, нет ли уже пользователя с таким телефоном
+    const existingUser = await pool.query(
+      'SELECT id FROM users WHERE phone = $1',
+      [virtualPhone]
+    );
+
+    let userId;
+    if (existingUser.rows.length > 0) {
+      userId = existingUser.rows[0].id;
+      logger.info({ telegramId, userId, phone: virtualPhone }, 'Using existing user for telegram auth');
+    } else {
+      try {
+        // Создаем нового пользователя
+        const newUserResult = await pool.query(
+          `INSERT INTO users (phone, name, verified) 
+           VALUES ($1, $2, TRUE) 
+           RETURNING id`,
+          [virtualPhone, userName]
+        );
+        userId = newUserResult.rows[0].id;
+        logger.info({ telegramId, userId, phone: virtualPhone, name: userName }, 'New user created for telegram auth');
+      } catch (error: any) {
+        // Если произошла ошибка (например, уникальность), пытаемся получить существующего пользователя
+        if (error.code === '23505') { // Unique violation
+          const conflictUser = await pool.query(
+            'SELECT id FROM users WHERE phone = $1',
+            [virtualPhone]
+          );
+          if (conflictUser.rows.length > 0) {
+            userId = conflictUser.rows[0].id;
+            logger.warn({ telegramId, userId, phone: virtualPhone }, 'User phone conflict resolved');
+          } else {
+            throw error;
+          }
+        } else {
+          throw error;
+        }
+      }
+    }
+
+    // Связываем telegram_users с users
+    try {
+      await pool.query(
+        `UPDATE telegram_users 
+         SET user_id = $1, updated_at = CURRENT_TIMESTAMP
+         WHERE telegram_id = $2`,
+        [userId, telegramId]
+      );
+    } catch (error: any) {
+      logger.error({ err: error, telegramId, userId }, 'Error linking telegram user');
+      throw error;
+    }
+
+    // Генерируем JWT токен
+    const token = jwt.sign(
+      { userId },
+      process.env.JWT_SECRET!,
+      { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
+    );
+
+    const userResult = await pool.query(
+      'SELECT id, phone, name, rating, deliveries_count FROM users WHERE id = $1',
+      [userId]
+    );
+
+    logger.info({ telegramId, userId, phone: virtualPhone }, 'Telegram simple auth successful');
+
+    const userData = userResult.rows[0];
+    const isVirtualAccount = userData.phone.startsWith('+7999000');
+
+    return res.json({
+      success: true,
+      token,
+      user: userData,
+      telegramUser: {
+        id: telegramId,
+        username,
+        first_name: firstName,
+      },
+      isVirtualAccount, // Флаг, что аккаунт создан с виртуальным телефоном
+      canLinkPhone: isVirtualAccount, // Можно связать реальный телефон позже
+    });
+  } catch (error: any) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({ error: 'Invalid input', details: error.errors });
+    }
+    logger.error({ err: error, telegramId }, 'Simple Telegram auth error');
+    res.status(500).json({ error: 'Failed to authenticate via Telegram' });
+  }
 });
 
 /**
@@ -91,7 +281,6 @@ router.post('/auth', async (req, res) => {
 
     // Если пользователь уже связан с аккаунтом, возвращаем JWT токен
     if (telegramUserData.user_id) {
-      const jwt = require('jsonwebtoken');
       const token = jwt.sign(
         { userId: telegramUserData.user_id },
         process.env.JWT_SECRET!,
@@ -116,7 +305,56 @@ router.post('/auth', async (req, res) => {
       });
     }
 
-    // Если пользователь не связан, возвращаем только Telegram данные
+    // Если пользователь не связан с аккаунтом, проверяем, может быть он уже создан через /auth/simple
+    // В этом случае создаем связь автоматически, используя виртуальный телефон
+    const telegramIdStr = String(telegramUser.id);
+    const last9Digits = telegramIdStr.slice(-9).padStart(9, '0');
+    const virtualPhone = `+7999000${last9Digits}`;
+    
+    const existingUserByPhone = await pool.query(
+      'SELECT id FROM users WHERE phone = $1',
+      [virtualPhone]
+    );
+    
+    if (existingUserByPhone.rows.length > 0) {
+      // Нашли пользователя с виртуальным телефоном - это пользователь созданный через /auth/simple
+      const userId = existingUserByPhone.rows[0].id;
+      
+      // Связываем telegram_users с users
+      await pool.query(
+        `UPDATE telegram_users 
+         SET user_id = $1, updated_at = CURRENT_TIMESTAMP
+         WHERE telegram_id = $2`,
+        [userId, telegramUser.id]
+      );
+      
+      // Генерируем токен
+      const token = jwt.sign(
+        { userId },
+        process.env.JWT_SECRET!,
+        { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
+      );
+      
+      const userResult = await pool.query(
+        'SELECT id, phone, name, rating, deliveries_count FROM users WHERE id = $1',
+        [userId]
+      );
+      
+      logger.info({ telegramId: telegramUser.id, userId }, 'Telegram user auto-linked to existing account');
+      
+      return res.json({
+        success: true,
+        token,
+        user: userResult.rows[0],
+        telegramUser: {
+          id: telegramUser.id,
+          username: telegramUser.username,
+          first_name: telegramUser.first_name,
+        },
+      });
+    }
+    
+    // Если пользователь не найден, возвращаем только Telegram данные
     return res.json({
       success: true,
       telegramUser: {
@@ -130,7 +368,7 @@ router.post('/auth', async (req, res) => {
     if (error instanceof z.ZodError) {
       return res.status(400).json({ error: 'Invalid input', details: error.errors });
     }
-    console.error('Telegram auth error:', error);
+    logger.error({ err: error }, 'Telegram auth error');
     res.status(500).json({ error: 'Failed to authenticate via Telegram' });
   }
 });

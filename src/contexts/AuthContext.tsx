@@ -2,6 +2,7 @@ import { createContext, useContext, useState, useEffect, ReactNode } from 'react
 import { authAPI } from '@/lib/api';
 import { isTelegramWebApp, getTelegramUser, getTelegramInitData } from '@/lib/telegram';
 import { isVKApp, getVKUser, getVKUserId } from '@/lib/vk';
+import { getToken, storeToken, clearToken, getUser, storeUser, hasValidToken } from '@/lib/token-storage';
 
 interface User {
   id: string;
@@ -65,14 +66,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       // Если есть пользователь из Mini App и нет сохраненного токена
-      if (miniAppUser && platform && !localStorage.getItem('accessToken')) {
+      if (miniAppUser && platform && !hasValidToken()) {
         // Можно предложить автоматический вход
         // Пока оставляем как есть - пользователь может войти через соцсеть
       }
 
       // Проверяем, есть ли сохраненный токен
-      const token = localStorage.getItem('accessToken');
-      const savedUser = localStorage.getItem('user');
+      const token = getToken();
+      const savedUser = getUser();
 
       if (token && savedUser) {
         try {
@@ -82,18 +83,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           authAPI.getMe()
             .then((response) => {
               setUser(response.data);
-              localStorage.setItem('user', JSON.stringify(response.data));
+              storeUser(response.data);
             })
             .catch(() => {
               // Токен невалиден
-              localStorage.removeItem('accessToken');
-              localStorage.removeItem('user');
+              clearToken();
               setUser(null);
             })
             .finally(() => setIsLoading(false));
         } catch {
-          localStorage.removeItem('accessToken');
-          localStorage.removeItem('user');
+          clearToken();
           setIsLoading(false);
         }
       } else {
@@ -105,20 +104,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const login = (token: string, userData: User) => {
-    localStorage.setItem('accessToken', token);
-    localStorage.setItem('user', JSON.stringify(userData));
+    storeToken(token);
+    storeUser(userData);
     setUser(userData);
   };
 
   const logout = () => {
-    localStorage.removeItem('accessToken');
-    localStorage.removeItem('user');
+    clearToken();
     setUser(null);
   };
 
   const updateUser = (userData: User) => {
     setUser(userData);
-    localStorage.setItem('user', JSON.stringify(userData));
+    storeUser(userData);
   };
 
   return (

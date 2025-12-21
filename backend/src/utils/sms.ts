@@ -116,7 +116,11 @@ export async function sendSMS(phone: string, code: string): Promise<boolean> {
         SMS_TIMEOUT
       );
 
-      const data = await response.json();
+      const data = await response.json() as {
+        status?: string;
+        status_code?: number;
+        balance?: number;
+      };
       
       const duration = Date.now() - startTime;
       
@@ -160,18 +164,19 @@ export async function sendSMS(phone: string, code: string): Promise<boolean> {
           302: 'Token не найден',
         };
 
-        const errorMsg = errorMessages[data.status_code] || `Unknown error (code: ${data.status_code})`;
+        const statusCode = data.status_code || 0;
+        const errorMsg = errorMessages[statusCode] || `Unknown error (code: ${statusCode})`;
         const duration = Date.now() - startTime;
         logger.error({ 
-          err: { code: data.status_code, message: errorMsg, data },
+          err: { code: statusCode, message: errorMsg, data },
           phone,
           provider: 'smsru',
           duration,
         }, 'SMS send failed');
-        metrics.record('sms_send_duration', duration, { provider: 'smsru', status: 'error', code: data.status_code });
+        metrics.record('sms_send_duration', duration, { provider: 'smsru', status: 'error', code: statusCode });
         
         // Для критических ошибок (нет средств, неправильный API ID) можно вернуть false
-        if (data.status_code === 200 || data.status_code === 201) {
+        if (statusCode === 200 || statusCode === 201) {
           return false;
         }
         
@@ -220,7 +225,10 @@ export async function sendSMS(phone: string, code: string): Promise<boolean> {
         }),
       });
 
-      const data = await response.json();
+      const data = await response.json() as {
+        error?: string;
+        balance?: string | number;
+      };
       
       if (data.error) {
         console.error(`❌ Ошибка SMSC.ru: ${data.error}`);
@@ -268,7 +276,10 @@ export async function sendSMS(phone: string, code: string): Promise<boolean> {
         }),
       });
 
-      const data = await response.json();
+      const data = await response.json() as {
+        success?: boolean;
+        error?: string;
+      };
       
       if (data.success) {
         console.log(`✅ SMS отправлен на ${phone} через GetSMS.online`);

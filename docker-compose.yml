@@ -37,6 +37,8 @@ services:
       args:
         - NODE_ENV=production
     container_name: sendbuddy-backend
+    env_file:
+      - .env.production
     environment:
       NODE_ENV: production
       PORT: 3001
@@ -46,7 +48,7 @@ services:
       FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
       UPLOAD_DIR: /app/uploads
       MAX_FILE_SIZE: 5242880
-      SMS_PROVIDER: ${SMS_PROVIDER:-smsru}
+      SMS_PROVIDER: ${SMS_PROVIDER}
       SMSRU_API_ID: ${SMSRU_API_ID:-}
       # Telegram Bot
       TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN}

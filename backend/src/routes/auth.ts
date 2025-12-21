@@ -44,8 +44,11 @@ const verifySchema = z.object({
 
 // Send SMS code for registration
 router.post('/register/send-code', smsRateLimit, async (req, res) => {
+  let phone: string | undefined;
   try {
-    const { phone, name } = registerSchema.parse(req.body);
+    const parsed = registerSchema.parse(req.body);
+    phone = parsed.phone;
+    const { name } = parsed;
 
     // Check if user already exists
     const existingUser = await pool.query(
@@ -84,17 +87,26 @@ router.post('/register/send-code', smsRateLimit, async (req, res) => {
     res.json(response);
   } catch (error: any) {
     if (error instanceof z.ZodError) {
-      return res.status(400).json({ error: 'Invalid input', details: error.errors });
+      const errorDetails = process.env.NODE_ENV === 'development' 
+        ? { details: error.errors }
+        : {};
+      return res.status(400).json({ 
+        error: 'Invalid input', 
+        ...errorDetails 
+      });
     }
-    logger.error({ err: error, phone }, 'Register send code error');
+    logger.error({ err: error, phone: phone || 'unknown' }, 'Register send code error');
     res.status(500).json({ error: 'Failed to send code' });
   }
 });
 
 // Verify code and create user
 router.post('/register/verify', verifyRateLimit, async (req, res) => {
+  let phone: string | undefined;
   try {
-    const { phone, code, name } = verifySchema.extend({ name: z.string().min(2) }).parse(req.body);
+    const parsed = verifySchema.extend({ name: z.string().min(2) }).parse(req.body);
+    phone = parsed.phone;
+    const { code, name } = parsed;
 
     // Проверяем количество неудачных попыток за последние 15 минут
     const failedAttempts = await pool.query(
@@ -157,15 +169,17 @@ router.post('/register/verify', verifyRateLimit, async (req, res) => {
     if (error instanceof z.ZodError) {
       return res.status(400).json({ error: 'Invalid input', details: error.errors });
     }
-    logger.error({ err: error, phone }, 'Register verify error');
+    logger.error({ err: error, phone: phone || 'unknown' }, 'Register verify error');
     res.status(500).json({ error: 'Failed to register user' });
   }
 });
 
 // Send SMS code for login
 router.post('/login/send-code', smsRateLimit, async (req, res) => {
+  let phone: string | undefined;
   try {
-    const { phone } = loginSchema.parse(req.body);
+    const parsed = loginSchema.parse(req.body);
+    phone = parsed.phone;
 
     // Check if user exists
     const userResult = await pool.query('SELECT id FROM users WHERE phone = $1', [phone]);
@@ -201,15 +215,18 @@ router.post('/login/send-code', smsRateLimit, async (req, res) => {
     if (error instanceof z.ZodError) {
       return res.status(400).json({ error: 'Invalid input', details: error.errors });
     }
-    logger.error({ err: error, phone }, 'Login send code error');
+    logger.error({ err: error, phone: phone || 'unknown' }, 'Login send code error');
     res.status(500).json({ error: 'Failed to send code' });
   }
 });
 
 // Verify code and login
 router.post('/login/verify', verifyRateLimit, async (req, res) => {
+  let phone: string | undefined;
   try {
-    const { phone, code } = verifySchema.parse(req.body);
+    const parsed = verifySchema.parse(req.body);
+    phone = parsed.phone;
+    const { code } = parsed;
 
     // Проверяем количество неудачных попыток за последние 15 минут
     const failedAttempts = await pool.query(
@@ -274,7 +291,7 @@ router.post('/login/verify', verifyRateLimit, async (req, res) => {
     if (error instanceof z.ZodError) {
       return res.status(400).json({ error: 'Invalid input', details: error.errors });
     }
-    logger.error({ err: error, phone }, 'Login verify error');
+    logger.error({ err: error, phone: phone || 'unknown' }, 'Login verify error');
     res.status(500).json({ error: 'Failed to login' });
   }
 });

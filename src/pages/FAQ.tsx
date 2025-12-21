@@ -7,7 +7,9 @@ import {
   Shield,
   CreditCard,
   Package,
-  Users
+  Users,
+  Mail,
+  Phone
 } from "lucide-react";
 import {
   Accordion,
@@ -134,6 +136,20 @@ export default function FAQPage() {
             <p className="text-muted-foreground mb-4 sm:mb-6 text-sm sm:text-base">
               Свяжитесь с нашей службой поддержки
             </p>
+            <div className="space-y-3 mb-6">
+              <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+                <Mail className="w-4 h-4" />
+                <a href="mailto:sebiev9595@bk.ru" className="text-primary hover:underline">
+                  sebiev9595@bk.ru
+                </a>
+              </div>
+              <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+                <Phone className="w-4 h-4" />
+                <a href="tel:+79259409404" className="text-primary hover:underline">
+                  +7 (925) 940-94-04
+                </a>
+              </div>
+            </div>
             <Button size="lg" variant="outline" asChild className="w-full sm:w-auto">
               <Link to="/">
                 Написать в поддержку

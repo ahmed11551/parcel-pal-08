@@ -79,9 +79,36 @@ export default function LoginPage() {
 
             {step === "phone" ? (
               <div className="space-y-6">
+                {/* Telegram авторизация - основной способ */}
+                <div className="p-4 bg-primary/10 border border-primary/20 rounded-xl">
+                  <p className="text-sm text-foreground font-medium mb-2">
+                    🚀 Рекомендуемый способ входа
+                  </p>
+                  <p className="text-xs text-muted-foreground mb-3">
+                    Откройте Telegram бота @SendBuddyExpress_Bot и напишите /start для автоматической авторизации
+                  </p>
+                  <a
+                    href="https://t.me/SendBuddyExpress_Bot"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs text-primary hover:underline font-medium"
+                  >
+                    Открыть бота в Telegram →
+                  </a>
+                </div>
+
+                <div className="relative">
+                  <div className="absolute inset-0 flex items-center">
+                    <span className="w-full border-t border-border"></span>
+                  </div>
+                  <div className="relative flex justify-center text-xs uppercase">
+                    <span className="bg-card px-2 text-muted-foreground">Или</span>
+                  </div>
+                </div>
+
                 <div>
                   <label className="block text-sm font-medium text-foreground mb-2">
-                    Номер телефона
+                    Номер телефона (альтернативный способ)
                   </label>
                   <div className="relative">
                     <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />

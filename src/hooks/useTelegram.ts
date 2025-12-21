@@ -9,6 +9,7 @@ import {
 } from '@/lib/telegram';
 import { api } from '@/lib/api';
 import { useNavigate } from 'react-router-dom';
+import { storeToken, storeUser } from '@/lib/token-storage';
 
 interface TelegramUser {
   id: number;
@@ -47,13 +48,16 @@ export function useTelegram() {
                 
                 if (response.success && response.token) {
                   // Сохраняем токен
-                  localStorage.setItem('token', response.token);
+                  storeToken(response.token);
                   setIsAuthenticated(true);
                   
-                  // Обновляем пользователя в API клиенте
+                  // Обновляем пользователя
                   if (response.user) {
-                    localStorage.setItem('user', JSON.stringify(response.user));
+                    storeUser(response.user);
                   }
+                  
+                  // Обновляем состояние AuthContext через событие (если нужно)
+                  window.dispatchEvent(new Event('storage'));
                 } else if (response.needsPhoneAuth) {
                   // Нужна авторизация по телефону
                   setIsAuthenticated(false);

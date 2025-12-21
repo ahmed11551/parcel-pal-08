@@ -12,7 +12,7 @@ export interface ApiError {
 
 class ApiClient {
   private getToken(): string | null {
-    return localStorage.getItem('token');
+    return getToken();
   }
 
   private async request<T>(
@@ -66,8 +66,8 @@ class ApiClient {
     });
     
     if (result.token) {
-      localStorage.setItem('token', result.token);
-      localStorage.setItem('user', JSON.stringify(result.user));
+      storeToken(result.token);
+      storeUser(result.user);
     }
     
     return result;
@@ -94,8 +94,8 @@ class ApiClient {
     });
     
     if (result.token) {
-      localStorage.setItem('token', result.token);
-      localStorage.setItem('user', JSON.stringify(result.user));
+      storeToken(result.token);
+      storeUser(result.user);
     }
     
     return result;
@@ -112,8 +112,7 @@ class ApiClient {
   }
 
   logout() {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
+    clearToken();
   }
 
   isAuthenticated(): boolean {
@@ -121,8 +120,7 @@ class ApiClient {
   }
 
   getCurrentUser() {
-    const userStr = localStorage.getItem('user');
-    return userStr ? JSON.parse(userStr) : null;
+    return getUser();
   }
 
   // Tasks

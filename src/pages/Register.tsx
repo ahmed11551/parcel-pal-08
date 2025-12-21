@@ -89,6 +89,33 @@ export default function RegisterPage() {
 
             {step === "info" ? (
               <div className="space-y-6">
+                {/* Telegram авторизация - основной способ */}
+                <div className="p-4 bg-primary/10 border border-primary/20 rounded-xl">
+                  <p className="text-sm text-foreground font-medium mb-2">
+                    🚀 Рекомендуемый способ регистрации
+                  </p>
+                  <p className="text-xs text-muted-foreground mb-3">
+                    Откройте Telegram бота @SendBuddyExpress_Bot и напишите /start - регистрация произойдет автоматически
+                  </p>
+                  <a
+                    href="https://t.me/SendBuddyExpress_Bot"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs text-primary hover:underline font-medium"
+                  >
+                    Открыть бота в Telegram →
+                  </a>
+                </div>
+
+                <div className="relative">
+                  <div className="absolute inset-0 flex items-center">
+                    <span className="w-full border-t border-border"></span>
+                  </div>
+                  <div className="relative flex justify-center text-xs uppercase">
+                    <span className="bg-card px-2 text-muted-foreground">Или</span>
+                  </div>
+                </div>
+
                 <div>
                   <label className="block text-sm font-medium text-foreground mb-2">
                     Имя

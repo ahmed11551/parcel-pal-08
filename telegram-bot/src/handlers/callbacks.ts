@@ -23,6 +23,63 @@ export const callbackHandler = async (ctx: Context) => {
       await startCommand(ctx);
       break;
 
+    case 'auth':
+      if (telegramId) {
+        const firstName = ctx.from?.first_name || 'Пользователь';
+        const lastName = ctx.from?.last_name;
+        const username = ctx.from?.username;
+
+        try {
+          const authResult = await telegramAPI.authSimple(
+            telegramId,
+            firstName,
+            lastName,
+            username
+          );
+
+          if (authResult.success) {
+            await ctx.reply(
+              '✅ *Вы успешно авторизованы!*\n\n' +
+              'Теперь вы можете пользоваться всеми функциями SendBuddy.',
+              {
+                parse_mode: 'Markdown',
+                reply_markup: {
+                  inline_keyboard: [
+                    [
+                      {
+                        text: '🚀 Открыть SendBuddy',
+                        web_app: { url: MINI_APP_URL }
+                      }
+                    ],
+                    [
+                      { text: '🏠 На главную', callback_data: 'start' }
+                    ]
+                  ]
+                }
+              }
+            );
+          }
+        } catch (error) {
+          console.error('Auth callback error:', error);
+          await ctx.reply(
+            '❌ Ошибка при авторизации. Попробуйте еще раз через несколько секунд.',
+            {
+              reply_markup: {
+                inline_keyboard: [
+                  [
+                    { text: '🔄 Попробовать снова', callback_data: 'auth' }
+                  ],
+                  [
+                    { text: '🏠 На главную', callback_data: 'start' }
+                  ]
+                ]
+              }
+            }
+          );
+        }
+      }
+      break;
+
     case 'help':
       await helpCommand(ctx);
       break;
@@ -34,9 +91,9 @@ export const callbackHandler = async (ctx: Context) => {
       await ctx.reply(
         '💬 *Поддержка SendBuddy*\n\n' +
         'Напишите ваш вопрос или проблему, и мы обязательно поможем!\n\n' +
-        'Вы также можете:\n' +
-        '📧 Email: support@sendbuddy.app\n' +
-        '📱 Телефон: +7 (800) 123-45-67',
+        'Вы также можете связаться с нами:\n' +
+        '📧 Email: sebiev9595@bk.ru\n' +
+        '📱 Телефон: +7 (925) 940-94-04',
         {
           parse_mode: 'Markdown',
           reply_markup: {
@@ -64,14 +121,29 @@ export const callbackHandler = async (ctx: Context) => {
     case 'subscribe':
       if (telegramId) {
         try {
-          // Здесь нужно будет связать с пользователем через API
+          // Сначала авторизуем пользователя (если еще не авторизован)
+          const firstName = ctx.from?.first_name || 'Пользователь';
+          const lastName = ctx.from?.last_name;
+          const username = ctx.from?.username;
+          
+          try {
+            await telegramAPI.authSimple(telegramId, firstName, lastName, username);
+          } catch (authError) {
+            // Игнорируем ошибку авторизации, продолжаем с подпиской
+            console.warn('Auth error during subscribe (continuing anyway):', authError);
+          }
+
+          // Подписываем на уведомления
+          await telegramAPI.subscribe(telegramId, 'all');
+          
           await ctx.reply(
-            '🔔 Вы подписаны на уведомления!\n\n' +
+            '🔔 *Вы подписаны на уведомления!*\n\n' +
             'Теперь вы будете получать:\n' +
             '• Уведомления о новых заданиях\n' +
             '• Обновления статуса доставки\n' +
             '• Важные новости платформы',
             {
+              parse_mode: 'Markdown',
               reply_markup: {
                 inline_keyboard: [
                   [
@@ -82,6 +154,7 @@ export const callbackHandler = async (ctx: Context) => {
             }
           );
         } catch (error) {
+          console.error('Subscribe error:', error);
           await ctx.reply('❌ Ошибка при подписке. Попробуйте позже.');
         }
       }

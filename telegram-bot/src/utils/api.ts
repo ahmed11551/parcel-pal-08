@@ -21,17 +21,28 @@ export interface TelegramAuthData {
 }
 
 export const telegramAPI = {
-  // Авторизация через Telegram
+  // Простая авторизация через Telegram ID (для бота)
+  async authSimple(telegramId: number, firstName: string, lastName?: string, username?: string) {
+    const response = await api.post('/telegram/auth/simple', {
+      telegramId,
+      firstName,
+      lastName,
+      username,
+    });
+    return response.data;
+  },
+
+  // Авторизация через Telegram (Mini App)
   async auth(initData: string) {
     const response = await api.post('/auth/telegram', { initData });
     return response.data;
   },
 
   // Подписка на уведомления
-  async subscribe(telegramId: number, userId: number) {
+  async subscribe(telegramId: number, subscriptionType: string = 'all') {
     const response = await api.post('/telegram/subscribe', {
       telegramId,
-      userId,
+      subscriptionType,
     });
     return response.data;
   },
