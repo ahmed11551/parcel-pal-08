@@ -107,6 +107,7 @@ services:
       NODE_ENV: production
       TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-8146754886:AAF0KRnXaCU3RwwqLSR0YomJkFbG6UFx8l4}
       API_URL: http://backend:3001/api
+      ADMIN_TELEGRAM_IDS: ${ADMIN_TELEGRAM_IDS:-}
       MINI_APP_URL: ${FRONTEND_URL:-https://send-buddy.ru}
       # Для webhook режима (опционально)
       # TELEGRAM_WEBHOOK_URL: ${TELEGRAM_WEBHOOK_URL:-}
