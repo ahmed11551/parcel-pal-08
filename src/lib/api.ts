@@ -37,6 +37,16 @@ class ApiClient {
     });
 
     if (!response.ok) {
+      // Если 401 - токен истек или не передан, очищаем токен и перенаправляем на логин
+      if (response.status === 401) {
+        clearToken();
+        clearUser();
+        // Перенаправляем на страницу входа только если мы не на странице входа/регистрации
+        if (typeof window !== 'undefined' && !window.location.pathname.includes('/login') && !window.location.pathname.includes('/register')) {
+          window.location.href = '/login';
+        }
+      }
+      
       const error: ApiError = await response.json().catch(() => ({
         error: 'Network error',
       }));
