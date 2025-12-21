@@ -83,6 +83,12 @@ export const telegramAPI = {
     const response = await api.get('/telegram/subscribers');
     return response.data;
   },
+
+  // Получить статистику подписок
+  async getSubscribersStats() {
+    const response = await api.get('/telegram/subscribers?stats=true');
+    return response.data;
+  },
 };
 
 export default telegramAPI;
