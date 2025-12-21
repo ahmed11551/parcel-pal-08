@@ -32,7 +32,7 @@ const createTaskSchema = z.object({
 // Get all tasks with filters
 router.get('/', optionalAuth, async (req: AuthRequest, res) => {
   try {
-    const { from, to, status, page = '1', limit = '20' } = req.query;
+    const { from, to, status, page = '1', limit = '20', minReward, maxReward, sortBy = 'date' } = req.query;
     
     let query = `
       SELECT 
@@ -69,7 +69,29 @@ router.get('/', optionalAuth, async (req: AuthRequest, res) => {
       query += ` AND t.status = 'active'`;
     }
 
-    query += ` GROUP BY t.id, u.id ORDER BY t.created_at DESC`;
+    if (minReward) {
+      query += ` AND t.reward >= $${paramCount}`;
+      params.push(parseInt(minReward as string));
+      paramCount++;
+    }
+
+    if (maxReward) {
+      query += ` AND t.reward <= $${paramCount}`;
+      params.push(parseInt(maxReward as string));
+      paramCount++;
+    }
+
+    // Sorting
+    let orderBy = 't.created_at DESC';
+    if (sortBy === 'reward') {
+      orderBy = 't.reward ASC';
+    } else if (sortBy === 'reward_desc') {
+      orderBy = 't.reward DESC';
+    } else if (sortBy === 'date') {
+      orderBy = 't.created_at DESC';
+    }
+
+    query += ` GROUP BY t.id, u.id ORDER BY ${orderBy}`;
 
     const offset = (parseInt(page as string) - 1) * parseInt(limit as string);
     query += ` LIMIT $${paramCount} OFFSET $${paramCount + 1}`;
