@@ -1,14 +1,41 @@
 // SMS service with support for multiple providers
 // В продакшене настроить реальный SMS провайдер
 
+import { logger, metrics } from './logger.js';
+
+// Таймаут для SMS запросов (10 секунд)
+const SMS_TIMEOUT = 10000;
+
+async function fetchWithTimeout(url: string, options: RequestInit, timeout: number): Promise<Response> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeout);
+  
+  try {
+    const response = await fetch(url, {
+      ...options,
+      signal: controller.signal,
+    });
+    clearTimeout(timeoutId);
+    return response;
+  } catch (error: any) {
+    clearTimeout(timeoutId);
+    if (error.name === 'AbortError') {
+      throw new Error(`SMS request timeout after ${timeout}ms`);
+    }
+    throw error;
+  }
+}
+
 export async function sendSMS(phone: string, code: string): Promise<boolean> {
+  const startTime = Date.now();
   const provider = process.env.SMS_PROVIDER || 'mock';
   const message = `Ваш код для SendBuddy: ${code}`;
 
   // В режиме разработки или если провайдер не настроен - используем mock
   if (process.env.NODE_ENV === 'development' || provider === 'mock') {
-    console.log(`📱 [MOCK SMS] To ${phone}: ${message}`);
-    console.log(`💡 В development режиме SMS не отправляется. Код: ${code}`);
+    logger.debug({ phone, code }, 'MOCK SMS sent');
+    const duration = Date.now() - startTime;
+    metrics.record('sms_send_duration', duration, { provider: 'mock', status: 'success' });
     return true;
   }
 
@@ -20,26 +47,34 @@ export async function sendSMS(phone: string, code: string): Promise<boolean> {
       const fromNumber = process.env.TWILIO_PHONE_NUMBER;
 
       if (!accountSid || !authToken || !fromNumber) {
-        console.warn('⚠️ Twilio не настроен. Используется mock режим.');
-        console.log(`📱 [MOCK SMS] To ${phone}: ${message}`);
+        logger.warn('Twilio not configured, using mock mode');
+        const duration = Date.now() - startTime;
+        metrics.record('sms_send_duration', duration, { provider: 'twilio', status: 'mock' });
         return true;
       }
 
       const twilio = require('twilio');
       const client = twilio(accountSid, authToken);
       
-      await client.messages.create({
-        body: message,
-        from: fromNumber,
-        to: phone,
-      });
+      await Promise.race([
+        client.messages.create({
+          body: message,
+          from: fromNumber,
+          to: phone,
+        }),
+        new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Twilio timeout')), SMS_TIMEOUT)
+        ),
+      ]);
       
-      console.log(`✅ SMS отправлен на ${phone}`);
+      const duration = Date.now() - startTime;
+      logger.info({ phone, provider: 'twilio', duration }, 'SMS sent');
+      metrics.record('sms_send_duration', duration, { provider: 'twilio', status: 'success' });
       return true;
     } catch (error: any) {
-      console.error('Ошибка отправки SMS через Twilio:', error);
-      // В случае ошибки возвращаем true, чтобы не блокировать процесс
-      // В production можно изменить на false
+      const duration = Date.now() - startTime;
+      logger.error({ err: error, phone, provider: 'twilio', duration }, 'SMS send failed');
+      metrics.record('sms_send_duration', duration, { provider: 'twilio', status: 'error' });
       return true;
     }
   }
@@ -49,8 +84,9 @@ export async function sendSMS(phone: string, code: string): Promise<boolean> {
     try {
       const apiId = process.env.SMSRU_API_ID;
       if (!apiId) {
-        console.warn('⚠️ SMS.ru не настроен. Используется mock режим.');
-        console.log(`📱 [MOCK SMS] To ${phone}: ${message}`);
+        logger.warn('SMS.ru not configured, using mock mode');
+        const duration = Date.now() - startTime;
+        metrics.record('sms_send_duration', duration, { provider: 'smsru', status: 'mock' });
         return true;
       }
 
@@ -63,27 +99,36 @@ export async function sendSMS(phone: string, code: string): Promise<boolean> {
           ? normalizedPhone 
           : '7' + normalizedPhone;
 
-      const response = await fetch('https://sms.ru/sms/send', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
+      const response = await fetchWithTimeout(
+        'https://sms.ru/sms/send',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+          body: new URLSearchParams({
+            api_id: apiId,
+            to: formattedPhone,
+            msg: message,
+            json: '1',
+          }),
         },
-        body: new URLSearchParams({
-          api_id: apiId,
-          to: formattedPhone,
-          msg: message,
-          json: '1',
-        }),
-      });
+        SMS_TIMEOUT
+      );
 
       const data = await response.json();
       
+      const duration = Date.now() - startTime;
+      
       // SMS.ru возвращает status_code: 100 для успешной отправки
       if (data.status === 'OK' && data.status_code === 100) {
-        console.log(`✅ SMS отправлен на ${phone} через SMS.ru`);
-        if (data.balance !== undefined) {
-          console.log(`💰 Баланс SMS.ru: ${data.balance} руб.`);
-        }
+        logger.info({ 
+          phone, 
+          provider: 'smsru', 
+          duration,
+          balance: data.balance,
+        }, 'SMS sent');
+        metrics.record('sms_send_duration', duration, { provider: 'smsru', status: 'success' });
         return true;
       } else {
         // Обработка различных кодов ошибок SMS.ru
@@ -115,9 +160,15 @@ export async function sendSMS(phone: string, code: string): Promise<boolean> {
           302: 'Token не найден',
         };
 
-        const errorMsg = errorMessages[data.status_code] || `Неизвестная ошибка (код: ${data.status_code})`;
-        console.error(`❌ Ошибка SMS.ru (код ${data.status_code}): ${errorMsg}`);
-        console.error('Детали:', data);
+        const errorMsg = errorMessages[data.status_code] || `Unknown error (code: ${data.status_code})`;
+        const duration = Date.now() - startTime;
+        logger.error({ 
+          err: { code: data.status_code, message: errorMsg, data },
+          phone,
+          provider: 'smsru',
+          duration,
+        }, 'SMS send failed');
+        metrics.record('sms_send_duration', duration, { provider: 'smsru', status: 'error', code: data.status_code });
         
         // Для критических ошибок (нет средств, неправильный API ID) можно вернуть false
         if (data.status_code === 200 || data.status_code === 201) {
@@ -127,7 +178,9 @@ export async function sendSMS(phone: string, code: string): Promise<boolean> {
         return true; // Для остальных ошибок не блокируем процесс
       }
     } catch (error: any) {
-      console.error('Ошибка отправки SMS через SMS.ru:', error);
+      const duration = Date.now() - startTime;
+      logger.error({ err: error, phone, provider: 'smsru', duration }, 'SMS send error');
+      metrics.record('sms_send_duration', duration, { provider: 'smsru', status: 'error', type: error.name });
       return true;
     }
   }
@@ -231,7 +284,9 @@ export async function sendSMS(phone: string, code: string): Promise<boolean> {
   }
 
   // По умолчанию mock
-  console.log(`📱 [MOCK SMS] To ${phone}: ${message}`);
+  const duration = Date.now() - startTime;
+  logger.debug({ phone, code, duration }, 'MOCK SMS (default)');
+  metrics.record('sms_send_duration', duration, { provider: 'mock', status: 'success' });
   return true;
 }
 

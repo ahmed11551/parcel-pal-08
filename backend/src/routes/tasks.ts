@@ -3,6 +3,7 @@ import { pool } from '../db/index.js';
 import { authenticateToken, optionalAuth, AuthRequest } from '../middleware/auth.js';
 import { z } from 'zod';
 import * as notifications from '../services/telegram-notifications.js';
+import { logger, metrics } from '../utils/logger.js';
 
 const router = express.Router();
 
@@ -109,7 +110,7 @@ router.get('/', optionalAuth, async (req: AuthRequest, res) => {
 
     res.json({ tasks, page: parseInt(page as string), limit: parseInt(limit as string) });
   } catch (error) {
-    console.error('Get tasks error:', error);
+    logger.error({ err: error }, 'Get tasks error');
     res.status(500).json({ error: 'Failed to get tasks' });
   }
 });
@@ -176,7 +177,7 @@ router.get('/:id', optionalAuth, async (req: AuthRequest, res) => {
       updatedAt: task.updated_at
     });
   } catch (error) {
-    console.error('Get task error:', error);
+    logger.error({ err: error, taskId: req.params.id }, 'Get task error');
     res.status(500).json({ error: 'Failed to get task' });
   }
 });
@@ -253,7 +254,11 @@ router.post('/', authenticateToken, async (req: AuthRequest, res) => {
     ).then((results) => {
       const failed = results.filter(r => r.status === 'rejected').length;
       if (failed > 0) {
-        console.warn(`⚠️ Не удалось отправить ${failed} уведомлений из ${results.length}`);
+        logger.warn({ 
+          failed, 
+          total: results.length,
+          taskId: task.id,
+        }, 'Failed to send some notifications');
       }
     });
 
@@ -284,7 +289,7 @@ router.post('/', authenticateToken, async (req: AuthRequest, res) => {
     if (error instanceof z.ZodError) {
       return res.status(400).json({ error: 'Invalid input', details: error.errors });
     }
-    console.error('Create task error:', error);
+    logger.error({ err: error, userId: req.userId }, 'Create task error');
     res.status(500).json({ error: 'Failed to create task' });
   } finally {
     client.release();
@@ -360,7 +365,7 @@ router.post('/:id/assign', authenticateToken, async (req: AuthRequest, res) => {
 
     res.json({ success: true, message: 'Task assigned successfully' });
   } catch (error) {
-    console.error('Assign task error:', error);
+    logger.error({ err: error, taskId: req.params.id, userId: req.userId }, 'Assign task error');
     res.status(500).json({ error: 'Failed to assign task' });
   }
 });
@@ -468,7 +473,7 @@ router.patch('/:id/status', authenticateToken, async (req: AuthRequest, res) => 
     if (error instanceof z.ZodError) {
       return res.status(400).json({ error: 'Invalid input', details: error.errors });
     }
-    console.error('Update task status error:', error);
+    logger.error({ err: error, taskId: req.params.id, userId: req.userId }, 'Update task status error');
     res.status(500).json({ error: 'Failed to update task status' });
   }
 });

@@ -1,12 +1,14 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import pinoHttp from 'pino-http';
 import { initDatabase, closeDatabase } from './db/index.js';
 import authRoutes from './routes/auth.js';
 import taskRoutes from './routes/tasks.js';
 import userRoutes from './routes/users.js';
 import uploadRoutes from './routes/upload.js';
 import telegramRoutes from './routes/telegram.js';
+import { logger, metrics } from './utils/logger.js';
 
 dotenv.config();
 
@@ -28,6 +30,17 @@ app.use(cors({
   origin: process.env.FRONTEND_URL || 'http://localhost:8080',
   credentials: true
 }));
+
+// Структурированное логирование HTTP запросов
+app.use(pinoHttp({ 
+  logger,
+  customLogLevel: (req, res, err) => {
+    if (res.statusCode >= 500) return 'error';
+    if (res.statusCode >= 400) return 'warn';
+    return 'info';
+  },
+}));
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -49,9 +62,44 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
+// Metrics endpoint
+app.get('/api/metrics', (req, res) => {
+  const stats: Record<string, any> = {};
+  
+  // Статистика по HTTP запросам
+  const httpStats = metrics.getMetricStats('http_request_duration');
+  if (httpStats) {
+    stats.httpRequests = httpStats;
+  }
+
+  // Статистика по SMS
+  const smsStats = metrics.getMetricStats('sms_send_duration');
+  if (smsStats) {
+    stats.sms = smsStats;
+  }
+
+  // Статистика по Telegram API
+  const telegramStats = metrics.getMetricStats('telegram_api_duration');
+  if (telegramStats) {
+    stats.telegram = telegramStats;
+  }
+
+  res.json({
+    timestamp: new Date().toISOString(),
+    metrics: stats,
+    allMetrics: metrics.getMetrics().slice(-100), // Последние 100 метрик
+  });
+});
+
 // Error handling middleware
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
-  console.error('Error:', err);
+  logger.error({
+    err,
+    method: req.method,
+    url: req.url,
+    statusCode: err.status || 500,
+  }, 'Request error');
+  
   res.status(err.status || 500).json({
     error: err.message || 'Internal server error',
     ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
@@ -62,23 +110,28 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
 async function start() {
   try {
     await initDatabase();
-    console.log('✅ Database connected');
+    logger.info('Database connected');
     
     const server = app.listen(PORT, '0.0.0.0', () => {
-      console.log(`🚀 Server running on port ${PORT}`);
-      console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
+      logger.info({
+        port: PORT,
+        environment: process.env.NODE_ENV || 'development',
+      }, 'Server started');
     });
 
     // Graceful shutdown
     process.on('SIGTERM', () => {
-      console.log('SIGTERM signal received: closing HTTP server');
+      logger.info('SIGTERM signal received: closing HTTP server');
       server.close(() => {
-        console.log('HTTP server closed');
-        closeDatabase().then(() => process.exit(0));
+        logger.info('HTTP server closed');
+        closeDatabase().then(() => {
+          logger.info('Database connection closed');
+          process.exit(0);
+        });
       });
     });
   } catch (error) {
-    console.error('❌ Failed to start server:', error);
+    logger.error({ err: error }, 'Failed to start server');
     process.exit(1);
   }
 }

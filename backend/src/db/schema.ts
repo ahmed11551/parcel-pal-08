@@ -156,22 +156,54 @@ export async function createTables() {
       )
     `);
 
-    // Indexes
+    // Indexes для оптимизации запросов
     await client.query(`
+      -- Users indexes
+      CREATE INDEX IF NOT EXISTS idx_users_phone ON users(phone);
+      CREATE INDEX IF NOT EXISTS idx_users_created_at ON users(created_at);
+      
+      -- Tasks indexes
       CREATE INDEX IF NOT EXISTS idx_tasks_sender ON tasks(sender_id);
       CREATE INDEX IF NOT EXISTS idx_tasks_courier ON tasks(courier_id);
       CREATE INDEX IF NOT EXISTS idx_tasks_status ON tasks(status);
       CREATE INDEX IF NOT EXISTS idx_tasks_airports ON tasks(from_airport, to_airport);
+      CREATE INDEX IF NOT EXISTS idx_tasks_status_created ON tasks(status, created_at DESC);
+      CREATE INDEX IF NOT EXISTS idx_tasks_dates ON tasks(date_from, date_to);
+      CREATE INDEX IF NOT EXISTS idx_tasks_created_at ON tasks(created_at DESC);
+      
+      -- Messages indexes
       CREATE INDEX IF NOT EXISTS idx_messages_task ON messages(task_id);
       CREATE INDEX IF NOT EXISTS idx_messages_users ON messages(sender_id, receiver_id);
+      CREATE INDEX IF NOT EXISTS idx_messages_read ON messages(read, created_at DESC);
+      
+      -- Payments indexes
+      CREATE INDEX IF NOT EXISTS idx_payments_task ON payments(task_id);
+      CREATE INDEX IF NOT EXISTS idx_payments_sender ON payments(sender_id);
+      CREATE INDEX IF NOT EXISTS idx_payments_courier ON payments(courier_id);
+      CREATE INDEX IF NOT EXISTS idx_payments_status ON payments(status);
+      
+      -- SMS codes indexes (для быстрого поиска и очистки)
       CREATE INDEX IF NOT EXISTS idx_sms_codes_phone ON sms_codes(phone);
+      CREATE INDEX IF NOT EXISTS idx_sms_codes_phone_code ON sms_codes(phone, code);
+      CREATE INDEX IF NOT EXISTS idx_sms_codes_expires ON sms_codes(expires_at);
+      CREATE INDEX IF NOT EXISTS idx_sms_codes_used_created ON sms_codes(used, created_at);
+      
+      -- Telegram indexes
       CREATE INDEX IF NOT EXISTS idx_telegram_users_user_id ON telegram_users(user_id);
       CREATE INDEX IF NOT EXISTS idx_telegram_users_telegram_id ON telegram_users(telegram_id);
+      CREATE INDEX IF NOT EXISTS idx_telegram_users_subscribed ON telegram_users(subscribed);
       CREATE INDEX IF NOT EXISTS idx_telegram_subscriptions_telegram_id ON telegram_subscriptions(telegram_id);
+      CREATE INDEX IF NOT EXISTS idx_telegram_subscriptions_active ON telegram_subscriptions(telegram_id, active);
       CREATE INDEX IF NOT EXISTS idx_support_messages_telegram_id ON support_messages(telegram_id);
       CREATE INDEX IF NOT EXISTS idx_support_messages_user_id ON support_messages(user_id);
+      CREATE INDEX IF NOT EXISTS idx_support_messages_status ON support_messages(status);
       CREATE INDEX IF NOT EXISTS idx_telegram_notifications_telegram_id ON telegram_notifications(telegram_id);
       CREATE INDEX IF NOT EXISTS idx_telegram_notifications_sent ON telegram_notifications(sent);
+      CREATE INDEX IF NOT EXISTS idx_telegram_notifications_unsent ON telegram_notifications(telegram_id, sent) WHERE sent = FALSE;
+      
+      -- Ratings indexes
+      CREATE INDEX IF NOT EXISTS idx_ratings_task ON ratings(task_id);
+      CREATE INDEX IF NOT EXISTS idx_ratings_to_user ON ratings(to_user_id);
     `);
 
     await client.query('COMMIT');

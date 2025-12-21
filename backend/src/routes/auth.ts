@@ -6,6 +6,7 @@ import bcrypt from 'bcryptjs';
 import { authenticateToken, AuthRequest } from '../middleware/auth.js';
 import { z } from 'zod';
 import rateLimit from 'express-rate-limit';
+import { logger } from '../utils/logger.js';
 
 const router = express.Router();
 
@@ -85,7 +86,7 @@ router.post('/register/send-code', smsRateLimit, async (req, res) => {
     if (error instanceof z.ZodError) {
       return res.status(400).json({ error: 'Invalid input', details: error.errors });
     }
-    console.error('Register send code error:', error);
+    logger.error({ err: error, phone }, 'Register send code error');
     res.status(500).json({ error: 'Failed to send code' });
   }
 });
@@ -156,7 +157,7 @@ router.post('/register/verify', verifyRateLimit, async (req, res) => {
     if (error instanceof z.ZodError) {
       return res.status(400).json({ error: 'Invalid input', details: error.errors });
     }
-    console.error('Register verify error:', error);
+    logger.error({ err: error, phone }, 'Register verify error');
     res.status(500).json({ error: 'Failed to register user' });
   }
 });
@@ -200,7 +201,7 @@ router.post('/login/send-code', smsRateLimit, async (req, res) => {
     if (error instanceof z.ZodError) {
       return res.status(400).json({ error: 'Invalid input', details: error.errors });
     }
-    console.error('Login send code error:', error);
+    logger.error({ err: error, phone }, 'Login send code error');
     res.status(500).json({ error: 'Failed to send code' });
   }
 });
@@ -273,7 +274,7 @@ router.post('/login/verify', verifyRateLimit, async (req, res) => {
     if (error instanceof z.ZodError) {
       return res.status(400).json({ error: 'Invalid input', details: error.errors });
     }
-    console.error('Login verify error:', error);
+    logger.error({ err: error, phone }, 'Login verify error');
     res.status(500).json({ error: 'Failed to login' });
   }
 });
@@ -300,7 +301,7 @@ router.get('/me', authenticateToken, async (req: AuthRequest, res) => {
       createdAt: user.created_at
     });
   } catch (error) {
-    console.error('Get me error:', error);
+    logger.error({ err: error, userId: req.userId }, 'Get me error');
     res.status(500).json({ error: 'Failed to get user' });
   }
 });

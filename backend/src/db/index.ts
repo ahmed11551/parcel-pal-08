@@ -31,6 +31,7 @@ async function cleanupOldSMSCodes() {
        AND used = TRUE`
     );
     if (result.rowCount && result.rowCount > 0) {
+      // Используем console.log для системных сообщений, так как logger может быть не инициализирован
       console.log(`🧹 Очищено ${result.rowCount} старых SMS кодов`);
     }
   } catch (error) {

@@ -1,4 +1,8 @@
 import crypto from 'crypto';
+import { logger, metrics } from './logger.js';
+
+// Таймаут для Telegram API запросов (5 секунд)
+const TELEGRAM_API_TIMEOUT = 5000;
 
 /**
  * Валидация Telegram initData
@@ -75,7 +79,7 @@ export function validateTelegramInitData(initData: string, botToken: string): {
       hash: hash,
     };
   } catch (error) {
-    console.error('Error validating Telegram initData:', error);
+    logger.error({ err: error }, 'Error validating Telegram initData');
     return null;
   }
 }
@@ -101,7 +105,7 @@ export function parseTelegramInitData(initData: string): {
 
     return JSON.parse(userStr);
   } catch (error) {
-    console.error('Error parsing Telegram initData:', error);
+    logger.error({ err: error }, 'Error parsing Telegram initData');
     return null;
   }
 }
