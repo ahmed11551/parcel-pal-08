@@ -167,13 +167,12 @@ router.get('/:id', optionalAuth, async (req: AuthRequest, res) => {
       return res.status(404).json({ error: 'Task not found' });
     }
 
-    // Allow viewing deleted tasks only if user is sender or courier
     const task = result.rows[0];
+
+    // Allow viewing deleted tasks only if user is sender or courier
     if (task.deleted_at && req.userId && task.sender_id !== req.userId && task.courier_id !== req.userId) {
       return res.status(404).json({ error: 'Task not found' });
     }
-
-    const task = result.rows[0];
 
     res.json({
       id: task.id,
