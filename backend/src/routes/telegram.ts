@@ -8,6 +8,10 @@ const router = express.Router();
 
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || '';
 
+if (!BOT_TOKEN && process.env.NODE_ENV === 'production') {
+  console.warn('⚠️ TELEGRAM_BOT_TOKEN не установлен. Telegram функции могут не работать.');
+}
+
 // Валидация схем
 const telegramAuthSchema = z.object({
   initData: z.string().min(1),

@@ -14,10 +14,18 @@ const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 const API_URL = process.env.API_URL || 'http://localhost:3001/api';
 const MINI_APP_URL = process.env.MINI_APP_URL || 'https://send-buddy.ru';
 
+// Имя бота для логирования
+const BOT_NAME = 'SendBuddyExpress_Bot';
+
 if (!BOT_TOKEN) {
   console.error('❌ TELEGRAM_BOT_TOKEN не установлен!');
+  console.error('💡 Установите переменную окружения TELEGRAM_BOT_TOKEN');
   process.exit(1);
 }
+
+console.log(`🤖 Инициализация бота: ${BOT_NAME}`);
+console.log(`📡 API URL: ${API_URL}`);
+console.log(`🌐 Mini App URL: ${MINI_APP_URL}`);
 
 const bot = new Telegraf(BOT_TOKEN);
 
@@ -62,7 +70,11 @@ const startBot = async () => {
       console.log('✅ Бот запущен (Long Polling)');
     }
     
-    console.log('🤖 SendBuddy Telegram Bot готов к работе!');
+    console.log(`✅ ${BOT_NAME} готов к работе!`);
+    
+    // Получаем информацию о боте
+    const botInfo = await bot.telegram.getMe();
+    console.log(`📋 Бот: @${botInfo.username} (${botInfo.first_name})`);
     
     // Запускаем сервис уведомлений (проверка каждые 30 секунд)
     startNotificationService(30000);
