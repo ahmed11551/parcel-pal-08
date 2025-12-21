@@ -278,6 +278,30 @@ class ApiClient {
     );
   }
 
+  // Chat/Messages
+  async getMessages(taskId: number) {
+    return this.request<{ messages: any[] }>(`/tasks/${taskId}/messages`);
+  }
+
+  async sendMessage(taskId: number, content: string) {
+    return this.request<{ id: number; message: string; senderId: number; createdAt: string }>(
+      `/tasks/${taskId}/messages`,
+      {
+        method: 'POST',
+        body: JSON.stringify({ content }),
+      }
+    );
+  }
+
+  async markMessagesAsRead(taskId: number) {
+    return this.request<{ success: boolean }>(
+      `/tasks/${taskId}/messages/read`,
+      {
+        method: 'POST',
+      }
+    );
+  }
+
   // Telegram
   async telegramAuth(initData: string) {
     return this.request<{

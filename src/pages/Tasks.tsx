@@ -130,22 +130,27 @@ export default function TasksPage() {
 
             {/* Filters */}
             <div className="bg-card p-4 sm:p-6 rounded-2xl shadow-sm">
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
                 <div className="relative">
                   <MapPin className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground" />
                   <input
                     type="text"
-                    placeholder="Откуда"
+                    placeholder="Откуда (код аэропорта)"
                     value={searchFrom}
-                    onChange={(e) => setSearchFrom(e.target.value)}
-                    className="w-full pl-10 sm:pl-12 pr-3 sm:pr-4 py-2.5 sm:py-3 bg-background border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary text-sm sm:text-base"
+                    onChange={(e) => setSearchFrom(e.target.value.toUpperCase())}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        handleSearch();
+                      }
+                    }}
+                    className="w-full pl-10 sm:pl-12 pr-3 sm:pr-4 py-2.5 sm:py-3 bg-background border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary text-sm sm:text-base uppercase"
                   />
                 </div>
                 <div className="relative">
                   <MapPin className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground" />
                   <input
                     type="text"
-                    placeholder="Куда (код аэропорта, например: LED)"
+                    placeholder="Куда (код аэропорта)"
                     value={searchTo}
                     onChange={(e) => setSearchTo(e.target.value.toUpperCase())}
                     onKeyDown={(e) => {
@@ -153,21 +158,30 @@ export default function TasksPage() {
                         handleSearch();
                       }
                     }}
-                    className="w-full pl-10 sm:pl-12 pr-3 sm:pr-4 py-2.5 sm:py-3 bg-background border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary text-sm sm:text-base"
+                    className="w-full pl-10 sm:pl-12 pr-3 sm:pr-4 py-2.5 sm:py-3 bg-background border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary text-sm sm:text-base uppercase"
                   />
                 </div>
-                <Button size="lg" className="w-full sm:col-span-2 md:col-span-1" onClick={handleSearch} disabled={isLoading}>
+                <Button size="lg" className="w-full" onClick={handleSearch} disabled={isLoading}>
                   {isLoading ? (
                     <>
-                      <Loader2 className="w-4 h-4 sm:w-5 sm:h-5 animate-spin" />
+                      <Loader2 className="w-4 h-4 sm:w-5 sm:h-5 animate-spin mr-2" />
                       Поиск...
                     </>
                   ) : (
                     <>
-                      <Search className="w-4 h-4 sm:w-5 sm:h-5" />
-                      Найти задания
+                      <Search className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
+                      Найти
                     </>
                   )}
+                </Button>
+                <Button 
+                  variant="ghost" 
+                  size="lg" 
+                  className="w-full" 
+                  onClick={handleResetFilters}
+                >
+                  <Filter className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
+                  Сбросить
                 </Button>
               </div>
             </div>
