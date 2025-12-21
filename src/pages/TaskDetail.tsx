@@ -105,6 +105,23 @@ export default function TaskDetailPage() {
     },
   });
 
+  const cancelTaskMutation = useMutation({
+    mutationFn: () => api.cancelTask(task.id),
+    onSuccess: (response) => {
+      toast.success(response.message || "Задание отменено");
+      queryClient.invalidateQueries({ queryKey: ['task', id] });
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['my-tasks'] });
+      // Navigate to tasks page after a short delay
+      setTimeout(() => {
+        navigate('/tasks');
+      }, 1500);
+    },
+    onError: (error: any) => {
+      toast.error(error.message || "Ошибка при отмене задания");
+    },
+  });
+
   return (
     <Layout>
       <div className="gradient-subtle min-h-screen py-6 sm:py-8 md:py-12">
@@ -223,6 +240,33 @@ export default function TaskDetailPage() {
                   <div className="text-sm text-muted-foreground text-center">
                     Это ваше задание
                   </div>
+
+                  {/* Cancel button for owner (only if status is active) */}
+                  {task.status === 'active' && (
+                    <Button 
+                      variant="destructive" 
+                      size="lg" 
+                      className="w-full"
+                      onClick={() => {
+                        if (window.confirm('Вы уверены, что хотите отменить это задание? Это действие нельзя отменить.')) {
+                          cancelTaskMutation.mutate();
+                        }
+                      }}
+                      disabled={cancelTaskMutation.isPending}
+                    >
+                      {cancelTaskMutation.isPending ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                          Отмена...
+                        </>
+                      ) : (
+                        <>
+                          <X className="w-4 h-4 mr-2" />
+                          Отменить задание
+                        </>
+                      )}
+                    </Button>
+                  )}
                   
                   {/* Status info for owner */}
                   {task.status === 'assigned' && task.courier && (
@@ -370,22 +414,47 @@ export default function TaskDetailPage() {
                   
                   {/* Actions for courier based on status */}
                   {task.status === 'assigned' && (
-                    <Button 
-                      size="lg" 
-                      className="w-full" 
-                      onClick={async () => {
-                        try {
-                          await api.updateTaskStatus(task.id, 'in_transit');
-                          toast.success("Посылка отмечена как полученная! Теперь она в пути.");
-                          window.location.reload(); // Reload to show updated status
-                        } catch (error: any) {
-                          toast.error(error.message || "Ошибка при обновлении статуса");
-                        }
-                      }}
-                    >
-                      <CheckCircle2 className="w-5 h-5 mr-2" />
-                      Получил посылку (В пути)
-                    </Button>
+                    <div className="space-y-2">
+                      <Button 
+                        size="lg" 
+                        className="w-full" 
+                        onClick={async () => {
+                          try {
+                            await api.updateTaskStatus(task.id, 'in_transit');
+                            toast.success("Посылка отмечена как полученная! Теперь она в пути.");
+                            window.location.reload(); // Reload to show updated status
+                          } catch (error: any) {
+                            toast.error(error.message || "Ошибка при обновлении статуса");
+                          }
+                        }}
+                      >
+                        <CheckCircle2 className="w-5 h-5 mr-2" />
+                        Получил посылку (В пути)
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        size="lg" 
+                        className="w-full"
+                        onClick={() => {
+                          if (window.confirm('Вы уверены, что хотите отказаться от этого задания?')) {
+                            cancelTaskMutation.mutate();
+                          }
+                        }}
+                        disabled={cancelTaskMutation.isPending}
+                      >
+                        {cancelTaskMutation.isPending ? (
+                          <>
+                            <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                            Отмена...
+                          </>
+                        ) : (
+                          <>
+                            <X className="w-4 h-4 mr-2" />
+                            Отказаться от задания
+                          </>
+                        )}
+                      </Button>
+                    </div>
                   )}
                   
                   {task.status === 'in_transit' && (

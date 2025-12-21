@@ -302,6 +302,15 @@ class ApiClient {
     );
   }
 
+  async cancelTask(taskId: number) {
+    return this.request<{ success: boolean; message: string }>(
+      `/tasks/${taskId}/cancel`,
+      {
+        method: 'POST',
+      }
+    );
+  }
+
   // Telegram
   async telegramAuth(initData: string) {
     return this.request<{
