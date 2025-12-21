@@ -23,7 +23,8 @@ else
 fi
 
 echo ""
-echo "🚀 Запускаю бота..."
+echo "🔄 Перезапускаю контейнеры для применения изменений..."
+docker compose down telegram-bot 2>/dev/null || true
 docker compose up -d telegram-bot
 
 echo ""

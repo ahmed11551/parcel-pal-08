@@ -98,6 +98,8 @@ services:
       context: ./telegram-bot
       dockerfile: Dockerfile
     container_name: sendbuddy-telegram-bot
+    env_file:
+      - .env.production
     environment:
       NODE_ENV: production
       TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN}

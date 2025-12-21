@@ -1,6 +1,7 @@
 {
   "name": "sendbuddy-telegram-bot",
   "version": "1.0.0",
+  "type": "module",
   "description": "Telegram Bot for SendBuddy platform",
   "main": "dist/index.js",
   "scripts": {
