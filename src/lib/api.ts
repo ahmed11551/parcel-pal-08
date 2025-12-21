@@ -1,4 +1,4 @@
-import { getToken, storeToken, storeUser, getUser } from './token-storage';
+import { getToken, storeToken, storeUser, getUser, clearToken, clearUser } from './token-storage';
 
 // Используем относительный путь для продакшена, или переменную окружения
 // В production всегда используем относительный путь /api (nginx проксирует)
