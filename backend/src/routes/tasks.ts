@@ -84,6 +84,8 @@ router.get('/', optionalAuth, async (req: AuthRequest, res) => {
       size: task.size,
       estimatedValue: task.estimated_value,
       photoUrl: task.photo_url,
+      receivedPhotoUrl: task.received_photo_url,
+      deliveredPhotoUrl: task.delivered_photo_url,
       from: {
         airport: task.from_airport,
         point: task.from_point
@@ -149,6 +151,8 @@ router.get('/:id', optionalAuth, async (req: AuthRequest, res) => {
       size: task.size,
       estimatedValue: task.estimated_value,
       photoUrl: task.photo_url,
+      receivedPhotoUrl: task.received_photo_url,
+      deliveredPhotoUrl: task.delivered_photo_url,
       from: {
         airport: task.from_airport,
         point: task.from_point
@@ -269,6 +273,8 @@ router.post('/', authenticateToken, async (req: AuthRequest, res) => {
       size: task.size,
       estimatedValue: task.estimated_value,
       photoUrl: task.photo_url,
+      receivedPhotoUrl: task.received_photo_url,
+      deliveredPhotoUrl: task.delivered_photo_url,
       from: {
         airport: task.from_airport,
         point: task.from_point
@@ -703,6 +709,8 @@ router.get('/my', authenticateToken, async (req: AuthRequest, res) => {
       size: task.size,
       estimatedValue: task.estimated_value,
       photoUrl: task.photo_url,
+      receivedPhotoUrl: task.received_photo_url,
+      deliveredPhotoUrl: task.delivered_photo_url,
       from: {
         airport: task.from_airport,
         point: task.from_point
