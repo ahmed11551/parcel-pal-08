@@ -1,7 +1,7 @@
 import { Layout } from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { usersAPI, reviewsAPI } from "@/lib/api";
+import { api } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import {
@@ -28,22 +28,22 @@ export default function ProfilePage() {
   const [editData, setEditData] = useState({
     name: user?.name || "",
     avatar: user?.avatar || "",
+    phoneSbp: user?.phoneSbp || "",
+    accountNumber: user?.accountNumber || "",
+    bankName: user?.bankName || "",
   });
 
   const { data: userData, isLoading } = useQuery({
     queryKey: ["user", user?.id],
-    queryFn: () => usersAPI.getMe(),
+    queryFn: () => api.getMe(),
     enabled: !!user,
   });
 
-  const { data: reviewsData } = useQuery({
-    queryKey: ["reviews", user?.id],
-    queryFn: () => reviewsAPI.getByUser(user?.id!),
-    enabled: !!user,
-  });
+  // Reviews will be added later if needed
+  const reviewsData = null;
 
   const updateMutation = useMutation({
-    mutationFn: (data: any) => usersAPI.updateMe(data),
+    mutationFn: (data: any) => api.updateProfile(data),
     onSuccess: (response) => {
       updateUser(response.data);
       setIsEditing(false);
@@ -108,6 +108,9 @@ export default function ProfilePage() {
                     setEditData({
                       name: profile?.name || "",
                       avatar: profile?.avatar || "",
+                      phoneSbp: profile?.phoneSbp || "",
+                      accountNumber: profile?.accountNumber || "",
+                      bankName: profile?.bankName || "",
                     });
                     setIsEditing(true);
                   }}
@@ -127,6 +130,97 @@ export default function ProfilePage() {
                   <div className="flex items-center gap-3">
                     <Phone className="w-5 h-5 text-muted-foreground" />
                     <span className="text-foreground">{profile?.phone}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Payment Details */}
+              <div className="mb-8">
+                <h2 className="text-xl font-bold mb-4">Реквизиты для получения платежей</h2>
+                <div className="space-y-4 bg-muted p-6 rounded-xl">
+                  <div>
+                    <label className="block text-sm font-medium text-foreground mb-2">
+                      Номер телефона для СБП
+                    </label>
+                    <div className="flex items-center gap-3">
+                      <input
+                        type="tel"
+                        placeholder="+79001234567"
+                        value={editData.phoneSbp || profile?.phoneSbp || ''}
+                        onChange={(e) => setEditData({ ...editData, phoneSbp: e.target.value })}
+                        className="flex-1 px-4 py-2 bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                      />
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          updateMutation.mutate({ phoneSbp: editData.phoneSbp || profile?.phoneSbp || '' });
+                        }}
+                        disabled={updateMutation.isPending}
+                      >
+                        {updateMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : "Сохранить"}
+                      </Button>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Номер должен начинаться с +7 и содержать 10 цифр после кода страны
+                    </p>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-foreground mb-2">
+                      Расчетный счет (опционально)
+                    </label>
+                    <div className="flex items-center gap-3">
+                      <input
+                        type="text"
+                        placeholder="40817810099910004312"
+                        value={editData.accountNumber || profile?.accountNumber || ''}
+                        onChange={(e) => setEditData({ ...editData, accountNumber: e.target.value })}
+                        className="flex-1 px-4 py-2 bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                      />
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          updateMutation.mutate({ accountNumber: editData.accountNumber || profile?.accountNumber || '' });
+                        }}
+                        disabled={updateMutation.isPending}
+                      >
+                        {updateMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : "Сохранить"}
+                      </Button>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-foreground mb-2">
+                      Название банка (опционально)
+                    </label>
+                    <div className="flex items-center gap-3">
+                      <input
+                        type="text"
+                        placeholder="Тинькофф Банк"
+                        value={editData.bankName || profile?.bankName || ''}
+                        onChange={(e) => setEditData({ ...editData, bankName: e.target.value })}
+                        className="flex-1 px-4 py-2 bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                      />
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          updateMutation.mutate({ bankName: editData.bankName || profile?.bankName || '' });
+                        }}
+                        disabled={updateMutation.isPending}
+                      >
+                        {updateMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : "Сохранить"}
+                      </Button>
+                    </div>
+                  </div>
+
+                  <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                    <p className="text-sm text-blue-900 dark:text-blue-100">
+                      <strong>💡 Важно:</strong> Эти реквизиты будут использоваться для получения платежей от отправителей заданий. 
+                      Убедитесь, что указали правильный номер телефона для СБП.
+                    </p>
                   </div>
                 </div>
               </div>

@@ -13,10 +13,11 @@ import {
   CheckCircle2,
   X
 } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
+import { Loader2, CreditCard, Copy } from "lucide-react";
+import { useState } from "react";
 
 const sizeLabels: Record<string, string> = {
   S: "Маленький",
