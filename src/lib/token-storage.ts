@@ -86,6 +86,17 @@ export function clearToken(): void {
 }
 
 /**
+ * Clear user data
+ */
+export function clearUser(): void {
+  try {
+    localStorage.removeItem(USER_KEY);
+  } catch (error) {
+    console.error('Failed to clear user:', error);
+  }
+}
+
+/**
  * Check if token exists and is valid
  */
 export function hasValidToken(): boolean {
