@@ -10,6 +10,17 @@
     <title>SendBuddy - P2P платформа доставки посылок</title>
     <!-- Telegram Web App SDK -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <!-- Initialize Telegram WebApp immediately to hide loading screen -->
+    <script>
+      (function() {
+        if (window.Telegram && window.Telegram.WebApp) {
+          // Call ready() immediately to hide loading screen
+          window.Telegram.WebApp.ready();
+          // Expand to fullscreen
+          window.Telegram.WebApp.expand();
+        }
+      })();
+    </script>
     <meta name="description" content="Безопасная P2P-платформа для передачи небольших посылок через путешественников" />
     <meta name="author" content="SendBuddy" />
     <meta property="og:title" content="SendBuddy - P2P платформа доставки посылок" />

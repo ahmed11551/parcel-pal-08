@@ -113,6 +113,7 @@ export const isTelegramWebApp = (): boolean => {
 export const initTelegramWebApp = () => {
   if (isTelegramWebApp()) {
     const tg = window.Telegram!.WebApp;
+    // ready() уже вызван в index.html, но вызываем для совместимости
     tg.ready();
     tg.expand();
     return tg;
