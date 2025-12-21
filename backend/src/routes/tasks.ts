@@ -167,6 +167,12 @@ router.get('/:id', optionalAuth, async (req: AuthRequest, res) => {
       return res.status(404).json({ error: 'Task not found' });
     }
 
+    // Allow viewing deleted tasks only if user is sender or courier
+    const task = result.rows[0];
+    if (task.deleted_at && req.userId && task.sender_id !== req.userId && task.courier_id !== req.userId) {
+      return res.status(404).json({ error: 'Task not found' });
+    }
+
     const task = result.rows[0];
 
     res.json({
@@ -480,12 +486,19 @@ router.patch('/:id/status', authenticateToken, async (req: AuthRequest, res) => 
       [status, id]
     );
 
-    // If delivered, release payment
+    // If delivered, release payment and soft delete task
     if (status === 'delivered' && task.courier_id) {
       await pool.query(
         `UPDATE payments SET status = 'released', updated_at = CURRENT_TIMESTAMP 
          WHERE task_id = $1 AND courier_id = $2`,
         [id, task.courier_id]
+      );
+      
+      // Soft delete task - mark as deleted after delivery
+      await pool.query(
+        `UPDATE tasks SET deleted_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP 
+         WHERE id = $1`,
+        [id]
       );
 
       // Уведомление о переводе денег курьеру
