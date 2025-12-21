@@ -19,6 +19,13 @@ const createTaskSchema = z.object({
   dateFrom: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   dateTo: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   reward: z.number().int().min(500).max(50000),
+}).refine((data) => {
+  const from = new Date(data.dateFrom);
+  const to = new Date(data.dateTo);
+  return to >= from;
+}, {
+  message: "dateTo must be after or equal to dateFrom",
+  path: ["dateTo"],
 });
 
 // Get all tasks with filters
@@ -176,11 +183,14 @@ router.get('/:id', optionalAuth, async (req: AuthRequest, res) => {
 
 // Create task
 router.post('/', authenticateToken, async (req: AuthRequest, res) => {
+  const client = await pool.connect();
   try {
+    await client.query('BEGIN');
+    
     const data = createTaskSchema.parse(req.body);
     const commission = Math.round(data.reward * 0.15);
 
-    const result = await pool.query(
+    const result = await client.query(
       `INSERT INTO tasks (
         sender_id, title, description, size, estimated_value, photo_url,
         from_airport, from_point, to_airport, to_point,
@@ -206,12 +216,14 @@ router.post('/', authenticateToken, async (req: AuthRequest, res) => {
 
     const task = result.rows[0];
 
-    // Create payment record
-    await pool.query(
+    // Create payment record в той же транзакции
+    await client.query(
       `INSERT INTO payments (task_id, sender_id, amount, commission, status)
        VALUES ($1, $2, $3, $4, 'pending')`,
       [task.id, req.userId, data.reward, commission]
     );
+
+    await client.query('COMMIT');
 
     // Отправляем уведомления подписанным пользователям о новом задании
     // Находим всех подписанных пользователей с подходящим маршрутом
@@ -233,8 +245,16 @@ router.post('/', authenticateToken, async (req: AuthRequest, res) => {
     };
 
     // Отправляем уведомления (асинхронно, не блокируем ответ)
-    subscribers.rows.forEach((row) => {
-      notifications.notifyNewTask(row.telegram_id, taskData).catch(console.error);
+    // Используем Promise.allSettled для правильной обработки ошибок
+    Promise.allSettled(
+      subscribers.rows.map((row) => 
+        notifications.notifyNewTask(row.telegram_id, taskData)
+      )
+    ).then((results) => {
+      const failed = results.filter(r => r.status === 'rejected').length;
+      if (failed > 0) {
+        console.warn(`⚠️ Не удалось отправить ${failed} уведомлений из ${results.length}`);
+      }
     });
 
     res.status(201).json({
@@ -260,11 +280,14 @@ router.post('/', authenticateToken, async (req: AuthRequest, res) => {
       commission
     });
   } catch (error: any) {
+    await client.query('ROLLBACK');
     if (error instanceof z.ZodError) {
       return res.status(400).json({ error: 'Invalid input', details: error.errors });
     }
     console.error('Create task error:', error);
     res.status(500).json({ error: 'Failed to create task' });
+  } finally {
+    client.release();
   }
 });
 

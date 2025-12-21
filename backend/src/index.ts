@@ -10,6 +10,16 @@ import telegramRoutes from './routes/telegram.js';
 
 dotenv.config();
 
+// Проверка обязательных переменных окружения
+const requiredEnvVars = ['JWT_SECRET', 'DATABASE_URL'];
+const missingVars = requiredEnvVars.filter(varName => !process.env[varName]);
+
+if (missingVars.length > 0) {
+  console.error('❌ Отсутствуют обязательные переменные окружения:', missingVars.join(', '));
+  console.error('💡 Проверьте файл .env или .env.production');
+  process.exit(1);
+}
+
 const app = express();
 const PORT = Number(process.env.PORT) || 3001;
 

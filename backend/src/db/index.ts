@@ -22,6 +22,22 @@ export const pool = new Pool({
   connectionTimeoutMillis: 2000,
 });
 
+// Очистка старых SMS кодов (старше 24 часов)
+async function cleanupOldSMSCodes() {
+  try {
+    const result = await pool.query(
+      `DELETE FROM sms_codes 
+       WHERE (expires_at < NOW() OR created_at < NOW() - INTERVAL '24 hours')
+       AND used = TRUE`
+    );
+    if (result.rowCount && result.rowCount > 0) {
+      console.log(`🧹 Очищено ${result.rowCount} старых SMS кодов`);
+    }
+  } catch (error) {
+    console.error('Ошибка при очистке старых SMS кодов:', error);
+  }
+}
+
 export async function initDatabase() {
   try {
     // Test connection
@@ -29,6 +45,12 @@ export async function initDatabase() {
     
     // Create tables
     await createTables();
+    
+    // Очистка старых SMS кодов при старте
+    await cleanupOldSMSCodes();
+    
+    // Периодическая очистка каждые 6 часов
+    setInterval(cleanupOldSMSCodes, 6 * 60 * 60 * 1000);
     
     console.log('✅ Database initialized');
   } catch (error) {

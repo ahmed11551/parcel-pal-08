@@ -5,8 +5,27 @@ import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import { authenticateToken, AuthRequest } from '../middleware/auth.js';
 import { z } from 'zod';
+import rateLimit from 'express-rate-limit';
 
 const router = express.Router();
+
+// Rate limiting для защиты от спама SMS
+const smsRateLimit = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 минут
+  max: 3, // максимум 3 запроса на отправку SMS
+  message: { error: 'Too many SMS requests, please try again later' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// Rate limiting для проверки кодов (защита от брутфорса)
+const verifyRateLimit = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 минут
+  max: 5, // максимум 5 попыток ввода кода
+  message: { error: 'Too many verification attempts, please try again later' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
 
 const registerSchema = z.object({
   name: z.string().min(2).max(100),
@@ -23,7 +42,7 @@ const verifySchema = z.object({
 });
 
 // Send SMS code for registration
-router.post('/register/send-code', async (req, res) => {
+router.post('/register/send-code', smsRateLimit, async (req, res) => {
   try {
     const { phone, name } = registerSchema.parse(req.body);
 
@@ -72,9 +91,23 @@ router.post('/register/send-code', async (req, res) => {
 });
 
 // Verify code and create user
-router.post('/register/verify', async (req, res) => {
+router.post('/register/verify', verifyRateLimit, async (req, res) => {
   try {
     const { phone, code, name } = verifySchema.extend({ name: z.string().min(2) }).parse(req.body);
+
+    // Проверяем количество неудачных попыток за последние 15 минут
+    const failedAttempts = await pool.query(
+      `SELECT COUNT(*) as count FROM sms_codes 
+       WHERE phone = $1 AND used = FALSE AND expires_at < NOW() 
+       AND created_at > NOW() - INTERVAL '15 minutes'`,
+      [phone]
+    );
+
+    if (parseInt(failedAttempts.rows[0].count) >= 5) {
+      return res.status(429).json({ 
+        error: 'Too many failed attempts. Please request a new code.' 
+      });
+    }
 
     // Verify code
     const codeResult = await pool.query(
@@ -129,7 +162,7 @@ router.post('/register/verify', async (req, res) => {
 });
 
 // Send SMS code for login
-router.post('/login/send-code', async (req, res) => {
+router.post('/login/send-code', smsRateLimit, async (req, res) => {
   try {
     const { phone } = loginSchema.parse(req.body);
 
@@ -173,9 +206,23 @@ router.post('/login/send-code', async (req, res) => {
 });
 
 // Verify code and login
-router.post('/login/verify', async (req, res) => {
+router.post('/login/verify', verifyRateLimit, async (req, res) => {
   try {
     const { phone, code } = verifySchema.parse(req.body);
+
+    // Проверяем количество неудачных попыток за последние 15 минут
+    const failedAttempts = await pool.query(
+      `SELECT COUNT(*) as count FROM sms_codes 
+       WHERE phone = $1 AND used = FALSE AND expires_at < NOW() 
+       AND created_at > NOW() - INTERVAL '15 minutes'`,
+      [phone]
+    );
+
+    if (parseInt(failedAttempts.rows[0].count) >= 5) {
+      return res.status(429).json({ 
+        error: 'Too many failed attempts. Please request a new code.' 
+      });
+    }
 
     // Verify code
     const codeResult = await pool.query(
