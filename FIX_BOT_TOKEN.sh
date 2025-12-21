@@ -24,9 +24,17 @@ echo "✅ Токен добавлен в .env.production"
 if grep -q "TELEGRAM_BOT_TOKEN=8146754886" .env.production; then
     echo "✅ Токен подтвержден"
     echo ""
-    echo "🔄 Перезапускаю бота..."
+    echo "📋 Проверяем формат файла..."
+    # Убираем пробелы вокруг =
+    sed -i 's/^TELEGRAM_BOT_TOKEN[[:space:]]*=[[:space:]]*/TELEGRAM_BOT_TOKEN=/' .env.production
+    sed -i 's/[[:space:]]*$//' .env.production
+    
+    echo ""
+    echo "🔄 Полностью перезапускаю бота..."
     docker compose stop telegram-bot
     docker compose rm -f telegram-bot
+    # Загружаем переменные окружения
+    export $(grep -v '^#' .env.production | xargs)
     docker compose up -d telegram-bot
     
     echo ""
