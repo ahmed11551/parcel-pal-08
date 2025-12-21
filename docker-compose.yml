@@ -48,6 +48,10 @@ services:
       MAX_FILE_SIZE: 5242880
       SMS_PROVIDER: ${SMS_PROVIDER:-smsru}
       SMSRU_API_ID: ${SMSRU_API_ID:-}
+      # Альтернативные провайдеры (раскомментируйте при необходимости)
+      # SMSCRU_LOGIN: ${SMSCRU_LOGIN:-}
+      # SMSCRU_PASSWORD: ${SMSCRU_PASSWORD:-}
+      # GETSMS_API_KEY: ${GETSMS_API_KEY:-}
     ports:
       - "3001:3001"
     volumes:

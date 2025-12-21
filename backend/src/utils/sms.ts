@@ -132,6 +132,104 @@ export async function sendSMS(phone: string, code: string): Promise<boolean> {
     }
   }
 
+  // SMSC.ru
+  if (provider === 'smscru') {
+    try {
+      const login = process.env.SMSCRU_LOGIN;
+      const password = process.env.SMSCRU_PASSWORD;
+      
+      if (!login || !password) {
+        console.warn('⚠️ SMSC.ru не настроен. Используется mock режим.');
+        console.log(`📱 [MOCK SMS] To ${phone}: ${message}`);
+        return true;
+      }
+
+      // Форматируем номер
+      const normalizedPhone = phone.replace(/\D/g, '');
+      const formattedPhone = normalizedPhone.startsWith('8') 
+        ? '7' + normalizedPhone.slice(1) 
+        : normalizedPhone.startsWith('7') 
+          ? normalizedPhone 
+          : '7' + normalizedPhone;
+
+      const response = await fetch('https://smsc.ru/sys/send.php', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: new URLSearchParams({
+          login: login,
+          psw: password,
+          phones: formattedPhone,
+          mes: message,
+          fmt: '3', // JSON формат
+          charset: 'utf-8',
+        }),
+      });
+
+      const data = await response.json();
+      
+      if (data.error) {
+        console.error(`❌ Ошибка SMSC.ru: ${data.error}`);
+        return true; // Не блокируем процесс
+      }
+      
+      console.log(`✅ SMS отправлен на ${phone} через SMSC.ru`);
+      if (data.balance) {
+        console.log(`💰 Баланс SMSC.ru: ${data.balance} руб.`);
+      }
+      return true;
+    } catch (error: any) {
+      console.error('Ошибка отправки SMS через SMSC.ru:', error);
+      return true;
+    }
+  }
+
+  // GetSMS.online
+  if (provider === 'getsms') {
+    try {
+      const apiKey = process.env.GETSMS_API_KEY;
+      
+      if (!apiKey) {
+        console.warn('⚠️ GetSMS.online не настроен. Используется mock режим.');
+        console.log(`📱 [MOCK SMS] To ${phone}: ${message}`);
+        return true;
+      }
+
+      const normalizedPhone = phone.replace(/\D/g, '');
+      const formattedPhone = normalizedPhone.startsWith('8') 
+        ? '7' + normalizedPhone.slice(1) 
+        : normalizedPhone.startsWith('7') 
+          ? normalizedPhone 
+          : '7' + normalizedPhone;
+
+      const response = await fetch('https://api.getsms.online/send', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`,
+        },
+        body: JSON.stringify({
+          phone: formattedPhone,
+          message: message,
+        }),
+      });
+
+      const data = await response.json();
+      
+      if (data.success) {
+        console.log(`✅ SMS отправлен на ${phone} через GetSMS.online`);
+        return true;
+      } else {
+        console.error(`❌ Ошибка GetSMS.online: ${data.error || 'Unknown error'}`);
+        return true;
+      }
+    } catch (error: any) {
+      console.error('Ошибка отправки SMS через GetSMS.online:', error);
+      return true;
+    }
+  }
+
   // По умолчанию mock
   console.log(`📱 [MOCK SMS] To ${phone}: ${message}`);
   return true;
