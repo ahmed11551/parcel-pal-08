@@ -325,6 +325,10 @@ export default function Index() {
                 href="https://t.me/SendBuddyExpress_Bot" 
                 target="_blank" 
                 rel="noopener noreferrer"
+                onClick={(e) => {
+                  e.preventDefault();
+                  window.open('https://t.me/SendBuddyExpress_Bot', '_blank', 'noopener,noreferrer');
+                }}
               >
                 <MessageCircle className="w-5 h-5 mr-2" />
                 Открыть в Telegram
