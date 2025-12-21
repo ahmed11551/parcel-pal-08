@@ -173,7 +173,7 @@ export async function sendSMS(phone: string, code: string): Promise<boolean> {
           provider: 'smsru',
           duration,
         }, 'SMS send failed');
-        metrics.record('sms_send_duration', duration, { provider: 'smsru', status: 'error', code: statusCode });
+        metrics.record('sms_send_duration', duration, { provider: 'smsru', status: 'error', code: String(statusCode) });
         
         // Для критических ошибок (нет средств, неправильный API ID) можно вернуть false
         if (statusCode === 200 || statusCode === 201) {

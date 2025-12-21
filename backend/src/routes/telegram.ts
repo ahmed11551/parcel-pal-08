@@ -44,13 +44,17 @@ const reviewSchema = z.object({
  * он может связать аккаунт через /api/telegram/link после авторизации в веб-приложении
  */
 router.post('/auth/simple', async (req, res) => {
+  let telegramId: number | undefined;
   try {
-    const { telegramId, firstName, lastName, username } = z.object({
+    const parsed = z.object({
       telegramId: z.number().int().positive(),
       firstName: z.string().min(1),
       lastName: z.string().optional(),
       username: z.string().optional(),
     }).parse(req.body);
+    
+    telegramId = parsed.telegramId;
+    const { firstName, lastName, username } = parsed;
 
     // Проверяем, есть ли уже запись telegram_users
     let telegramUserRecord = await pool.query(
