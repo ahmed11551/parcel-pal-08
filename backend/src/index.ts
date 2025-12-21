@@ -76,6 +76,7 @@ app.use('/api/tasks', taskRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/telegram', telegramRoutes);
+app.use('/api/reports', reportsRoutes);
 
 // Health check with database connectivity
 app.get('/api/health', async (req, res) => {

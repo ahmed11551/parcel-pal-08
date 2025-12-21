@@ -16,8 +16,10 @@ import {
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { toast } from "sonner";
-import { Loader2, CreditCard, Copy, Camera } from "lucide-react";
+import { Loader2, CreditCard, Copy, Camera, Flag, AlertTriangle } from "lucide-react";
 import { useState } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
 
 const sizeLabels: Record<string, string> = {
   S: "Маленький",
@@ -80,6 +82,9 @@ export default function TaskDetailPage() {
 
   const queryClient = useQueryClient();
   const [showPaymentDetails, setShowPaymentDetails] = useState(false);
+  const [showReportDialog, setShowReportDialog] = useState(false);
+  const [reportReason, setReportReason] = useState('');
+  const [reportDescription, setReportDescription] = useState('');
 
   const fromInfo = getAirportInfo(task.from?.airport || '');
   const toInfo = getAirportInfo(task.to?.airport || '');
