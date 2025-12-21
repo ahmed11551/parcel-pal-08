@@ -623,5 +623,146 @@ router.get('/my', authenticateToken, async (req: AuthRequest, res) => {
   }
 });
 
+// Get messages for task
+router.get('/:id/messages', authenticateToken, async (req: AuthRequest, res) => {
+  try {
+    const { id } = req.params;
+
+    // Check if user is sender or courier of this task
+    const taskResult = await pool.query(
+      'SELECT sender_id, courier_id FROM tasks WHERE id = $1',
+      [id]
+    );
+
+    if (taskResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Task not found' });
+    }
+
+    const task = taskResult.rows[0];
+
+    if (task.sender_id !== req.userId && task.courier_id !== req.userId) {
+      return res.status(403).json({ error: 'Not authorized to view messages' });
+    }
+
+    // Get messages
+    const messagesResult = await pool.query(
+      `SELECT 
+        m.id, m.content, m.read, m.created_at,
+        m.sender_id,
+        u.name as sender_name
+      FROM messages m
+      LEFT JOIN users u ON m.sender_id = u.id
+      WHERE m.task_id = $1
+      ORDER BY m.created_at ASC`,
+      [id]
+    );
+
+    const messages = messagesResult.rows.map(msg => ({
+      id: msg.id,
+      message: msg.content,
+      senderId: msg.sender_id,
+      senderName: msg.sender_name,
+      read: msg.read,
+      createdAt: msg.created_at,
+    }));
+
+    res.json({ messages });
+  } catch (error) {
+    logger.error({ err: error, taskId: req.params.id, userId: req.userId }, 'Get messages error');
+    res.status(500).json({ error: 'Failed to get messages' });
+  }
+});
+
+// Send message
+router.post('/:id/messages', authenticateToken, async (req: AuthRequest, res) => {
+  try {
+    const { id } = req.params;
+    const { content } = z.object({
+      content: z.string().min(1).max(1000),
+    }).parse(req.body);
+
+    // Check if user is sender or courier of this task
+    const taskResult = await pool.query(
+      'SELECT sender_id, courier_id FROM tasks WHERE id = $1',
+      [id]
+    );
+
+    if (taskResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Task not found' });
+    }
+
+    const task = taskResult.rows[0];
+
+    if (task.sender_id !== req.userId && task.courier_id !== req.userId) {
+      return res.status(403).json({ error: 'Not authorized to send messages' });
+    }
+
+    // Determine receiver (the other user)
+    const receiverId = task.sender_id === req.userId ? task.courier_id : task.sender_id;
+
+    if (!receiverId) {
+      return res.status(400).json({ error: 'Task has no courier assigned' });
+    }
+
+    // Insert message
+    const result = await pool.query(
+      `INSERT INTO messages (task_id, sender_id, receiver_id, content, read)
+       VALUES ($1, $2, $3, $4, FALSE)
+       RETURNING id, content, created_at`,
+      [id, req.userId, receiverId, content]
+    );
+
+    const message = result.rows[0];
+
+    res.status(201).json({
+      id: message.id,
+      message: message.content,
+      senderId: req.userId,
+      createdAt: message.created_at,
+    });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({ error: 'Invalid input', details: error.errors });
+    }
+    logger.error({ err: error, taskId: req.params.id, userId: req.userId }, 'Send message error');
+    res.status(500).json({ error: 'Failed to send message' });
+  }
+});
+
+// Mark messages as read
+router.post('/:id/messages/read', authenticateToken, async (req: AuthRequest, res) => {
+  try {
+    const { id } = req.params;
+
+    // Check if user is sender or courier of this task
+    const taskResult = await pool.query(
+      'SELECT sender_id, courier_id FROM tasks WHERE id = $1',
+      [id]
+    );
+
+    if (taskResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Task not found' });
+    }
+
+    const task = taskResult.rows[0];
+
+    if (task.sender_id !== req.userId && task.courier_id !== req.userId) {
+      return res.status(403).json({ error: 'Not authorized' });
+    }
+
+    // Mark messages as read where user is receiver
+    await pool.query(
+      `UPDATE messages SET read = TRUE 
+       WHERE task_id = $1 AND receiver_id = $2 AND read = FALSE`,
+      [id, req.userId]
+    );
+
+    res.json({ success: true });
+  } catch (error) {
+    logger.error({ err: error, taskId: req.params.id, userId: req.userId }, 'Mark messages read error');
+    res.status(500).json({ error: 'Failed to mark messages as read' });
+  }
+});
+
 export default router;
 

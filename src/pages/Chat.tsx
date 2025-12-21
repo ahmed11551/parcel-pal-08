@@ -11,52 +11,55 @@ import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
 export default function ChatPage() {
-  const { orderId } = useParams<{ orderId: string }>();
+  const { taskId } = useParams<{ taskId: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const [message, setMessage] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  const { data: task } = useQuery({
-    queryKey: ["task", orderId],
-    queryFn: () => api.getTask(Number(orderId!)),
-    enabled: !!orderId,
+  const { data: task, isLoading: taskLoading } = useQuery({
+    queryKey: ["task", taskId],
+    queryFn: () => api.getTask(Number(taskId!)),
+    enabled: !!taskId,
   });
 
-  const { data: messagesData, isLoading } = useQuery({
-    queryKey: ["chat-messages", orderId],
-    queryFn: () => chatAPI.getMessages(orderId!),
-    enabled: !!orderId,
+  const { data: messagesData, isLoading: messagesLoading } = useQuery({
+    queryKey: ["chat-messages", taskId],
+    queryFn: () => api.getMessages(Number(taskId!)),
+    enabled: !!taskId,
     refetchInterval: 3000, // Polling каждые 3 секунды
   });
 
-  const messages = messagesData?.data || [];
+  const messages = messagesData?.messages || [];
 
   const sendMessageMutation = useMutation({
-    mutationFn: (data: { orderId: string; message: string }) => chatAPI.sendMessage(data),
+    mutationFn: (content: string) => api.sendMessage(Number(taskId!), content),
     onSuccess: () => {
       setMessage("");
-      queryClient.invalidateQueries({ queryKey: ["chat-messages", orderId] });
-      queryClient.invalidateQueries({ queryKey: ["chat-unread-count"] });
+      queryClient.invalidateQueries({ queryKey: ["chat-messages", taskId] });
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.message || "Ошибка при отправке сообщения");
+      toast.error(error.message || "Ошибка при отправке сообщения");
     },
   });
 
   const markAsReadMutation = useMutation({
-    mutationFn: (orderId: string) => chatAPI.markAsRead(orderId),
+    mutationFn: () => api.markMessagesAsRead(Number(taskId!)),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["chat-unread-count"] });
+      queryClient.invalidateQueries({ queryKey: ["chat-messages", taskId] });
     },
   });
 
   useEffect(() => {
-    if (messages.length > 0 && orderId) {
-      markAsReadMutation.mutate(orderId);
+    if (messages.length > 0 && taskId) {
+      // Mark as read if there are unread messages for current user
+      const hasUnread = messages.some((msg: any) => !msg.read && msg.senderId !== user?.id);
+      if (hasUnread) {
+        markAsReadMutation.mutate();
+      }
     }
-  }, [messages.length, orderId]);
+  }, [messages.length, taskId, user?.id]);
 
   useEffect(() => {
     // Автоскролл к последнему сообщению
@@ -66,8 +69,8 @@ export default function ChatPage() {
   }, [messages]);
 
   const handleSend = () => {
-    if (!message.trim() || !orderId) return;
-    sendMessageMutation.mutate({ orderId, message: message.trim() });
+    if (!message.trim() || !taskId) return;
+    sendMessageMutation.mutate(message.trim());
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -77,11 +80,10 @@ export default function ChatPage() {
     }
   };
 
-  const orderData = order?.data;
-  const otherUser =
-    orderData?.senderId === user?.id ? orderData?.carrier : orderData?.sender;
+  // Determine other user (sender or courier)
+  const otherUser = task?.sender?.id === user?.id ? task?.courier : task?.sender;
 
-  if (!orderData) {
+  if (taskLoading || !task) {
     return (
       <Layout>
         <div className="min-h-screen flex items-center justify-center">
@@ -98,7 +100,7 @@ export default function ChatPage() {
           {/* Header */}
           <div className="bg-card rounded-2xl shadow-md mb-4 p-4">
             <div className="flex items-center gap-4">
-              <Button variant="ghost" size="icon" onClick={() => navigate("/orders")}>
+              <Button variant="ghost" size="icon" onClick={() => navigate(`/tasks/${taskId}`)}>
                 <ArrowLeft className="w-5 h-5" />
               </Button>
               <div className="w-10 h-10 gradient-hero rounded-full flex items-center justify-center text-sm font-bold text-primary-foreground">
@@ -107,7 +109,7 @@ export default function ChatPage() {
               <div className="flex-1">
                 <div className="font-semibold text-foreground">{otherUser?.name || "Пользователь"}</div>
                 <div className="text-sm text-muted-foreground">
-                  Заказ #{orderId?.slice(0, 8)} • {orderData.task?.title}
+                  Задание #{taskId?.slice(0, 8)} • {task?.title}
                 </div>
               </div>
             </div>
@@ -116,7 +118,7 @@ export default function ChatPage() {
           {/* Messages */}
           <div className="bg-card rounded-2xl shadow-md h-[calc(100vh-280px)] flex flex-col">
             <ScrollArea className="flex-1 p-4" ref={scrollRef}>
-              {isLoading ? (
+              {messagesLoading ? (
                 <div className="flex items-center justify-center h-full">
                   <Loader2 className="w-6 h-6 animate-spin text-primary" />
                 </div>
@@ -140,7 +142,7 @@ export default function ChatPage() {
                               : "bg-muted text-foreground"
                           }`}
                         >
-                          <p className="text-sm whitespace-pre-wrap">{msg.message}</p>
+                          <p className="text-sm whitespace-pre-wrap">{msg.message || msg.content}</p>
                           <p
                             className={`text-xs mt-2 ${
                               isOwn ? "text-primary-foreground/70" : "text-muted-foreground"

@@ -194,9 +194,20 @@ export default function OrdersPage() {
                               onClick={() => navigate(`/tasks/${task.id}`)}
                               className="w-full"
                             >
-                              <MessageSquare className="w-4 h-4 mr-2" />
                               Подробнее
                             </Button>
+                            
+                            {/* Chat button */}
+                            {(task.status === 'assigned' || task.status === 'in_transit' || task.status === 'delivered') && (
+                              <Button
+                                variant="outline"
+                                onClick={() => navigate(`/chat/${task.id}`)}
+                                className="w-full"
+                              >
+                                <MessageSquare className="w-4 h-4 mr-2" />
+                                Чат
+                              </Button>
+                            )}
 
                             {/* Курьер: может отметить как получено если статус assigned */}
                             {isCourier && task.status === "assigned" && (

@@ -17,6 +17,7 @@ import FAQ from "./pages/FAQ";
 import Terms from "./pages/Terms";
 import Privacy from "./pages/Privacy";
 import Orders from "./pages/Orders";
+import ChatPage from "./pages/Chat";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -39,6 +40,7 @@ const App = () => {
             <Route path="/" element={<Index />} />
             <Route path="/tasks" element={<Tasks />} />
             <Route path="/tasks/:id" element={<TaskDetail />} />
+            <Route path="/chat/:taskId" element={<ChatPage />} />
             <Route path="/create-task" element={<CreateTask />} />
             <Route path="/orders" element={<Orders />} />
             <Route path="/login" element={<Login />} />

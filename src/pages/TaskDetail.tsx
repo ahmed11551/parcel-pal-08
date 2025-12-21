@@ -418,6 +418,16 @@ export default function TaskDetailPage() {
                       </div>
                     </div>
                   )}
+
+                  {/* Chat button for courier */}
+                  {task.status !== 'active' && task.sender && (
+                    <Button variant="outline" size="lg" className="w-full" asChild>
+                      <Link to={`/chat/${task.id}`}>
+                        <MessageCircle className="w-5 h-5 mr-2" />
+                        Открыть чат с отправителем
+                      </Link>
+                    </Button>
+                  )}
                 </div>
               )}
 
