@@ -1,3 +1,5 @@
+import { getToken, storeToken, storeUser, getUser } from './token-storage';
+
 // Используем относительный путь для продакшена, или переменную окружения
 // В production всегда используем относительный путь /api (nginx проксирует)
 // В development используем localhost:3001 или прокси из vite.config.ts
