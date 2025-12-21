@@ -146,7 +146,7 @@ export const callbackHandler = async (ctx: Context) => {
         const rating = pendingReviews.get(telegramId);
         if (rating) {
           try {
-            await telegramAPI.createReview(telegramId, rating);
+            await telegramAPI.createReview(telegramId, rating, '');
             await ctx.reply('✅ Отзыв сохранен! Спасибо!');
           } catch (error) {
             await ctx.reply('❌ Ошибка при сохранении отзыва.');
