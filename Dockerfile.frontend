@@ -17,9 +17,10 @@ COPY . .
 ARG VITE_API_URL=/api
 ENV VITE_API_URL=${VITE_API_URL}
 ENV NODE_ENV=production
+ENV MODE=production
 
-# Build
-RUN npm run build
+# Build (убеждаемся что Vite видит production режим)
+RUN npm run build -- --mode production
 
 # Проверка что build прошел успешно
 RUN test -d dist && test -f dist/index.html || (echo "Build failed!" && exit 1)

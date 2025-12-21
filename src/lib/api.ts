@@ -215,7 +215,10 @@ class ApiClient {
 
     const result = await response.json();
     // Return full URL
-    const baseUrl = API_URL.replace('/api', '');
+    // Если API_URL относительный (/api), используем текущий origin
+    const baseUrl = API_URL.startsWith('/') 
+      ? window.location.origin 
+      : API_URL.replace('/api', '');
     return `${baseUrl}${result.url}`;
   }
 
