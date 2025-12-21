@@ -94,13 +94,19 @@ const mockTasks = [
 export default function TasksPage() {
   const [searchFrom, setSearchFrom] = useState("");
   const [searchTo, setSearchTo] = useState("");
+  const [minReward, setMinReward] = useState("");
+  const [maxReward, setMaxReward] = useState("");
+  const [sortBy, setSortBy] = useState<"date" | "reward" | "reward_desc">("date");
 
   const { data, isLoading, error, refetch } = useQuery({
-    queryKey: ['tasks', searchFrom, searchTo],
+    queryKey: ['tasks', searchFrom, searchTo, minReward, maxReward, sortBy],
     queryFn: () => api.getTasks({
       from: searchFrom || undefined,
       to: searchTo || undefined,
-      status: 'active'
+      status: 'active',
+      minReward: minReward ? parseInt(minReward) : undefined,
+      maxReward: maxReward ? parseInt(maxReward) : undefined,
+      sortBy: sortBy as 'date' | 'reward' | 'reward_desc',
     }),
     retry: 1,
   });
@@ -183,6 +189,54 @@ export default function TasksPage() {
                   <Filter className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
                   Сбросить
                 </Button>
+              </div>
+              
+              {/* Advanced Filters */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 mt-4 pt-4 border-t border-border">
+                <div className="relative">
+                  <span className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 text-muted-foreground">₽</span>
+                  <input
+                    type="number"
+                    placeholder="От (руб.)"
+                    value={minReward}
+                    onChange={(e) => setMinReward(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        handleSearch();
+                      }
+                    }}
+                    className="w-full pl-10 sm:pl-12 pr-3 sm:pr-4 py-2.5 sm:py-3 bg-background border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary text-sm sm:text-base"
+                  />
+                </div>
+                <div className="relative">
+                  <span className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 text-muted-foreground">₽</span>
+                  <input
+                    type="number"
+                    placeholder="До (руб.)"
+                    value={maxReward}
+                    onChange={(e) => setMaxReward(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        handleSearch();
+                      }
+                    }}
+                    className="w-full pl-10 sm:pl-12 pr-3 sm:pr-4 py-2.5 sm:py-3 bg-background border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary text-sm sm:text-base"
+                  />
+                </div>
+                <div>
+                  <select
+                    value={sortBy}
+                    onChange={(e) => {
+                      setSortBy(e.target.value as "date" | "reward" | "reward_desc");
+                      refetch();
+                    }}
+                    className="w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-background border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary text-sm sm:text-base"
+                  >
+                    <option value="date">По дате (новые)</option>
+                    <option value="reward">По цене (дешевле)</option>
+                    <option value="reward_desc">По цене (дороже)</option>
+                  </select>
+                </div>
               </div>
             </div>
           </div>

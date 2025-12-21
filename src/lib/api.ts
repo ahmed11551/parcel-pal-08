@@ -142,6 +142,9 @@ class ApiClient {
     status?: string;
     page?: number;
     limit?: number;
+    minReward?: number;
+    maxReward?: number;
+    sortBy?: 'date' | 'reward' | 'reward_desc';
   }) {
     const queryParams = new URLSearchParams();
     if (params?.from) queryParams.append('from', params.from);
