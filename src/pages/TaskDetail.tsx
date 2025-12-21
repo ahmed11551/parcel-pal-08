@@ -458,22 +458,56 @@ export default function TaskDetailPage() {
                   )}
                   
                   {task.status === 'in_transit' && (
-                    <Button 
-                      size="lg" 
-                      className="w-full" 
-                      onClick={async () => {
-                        try {
-                          await api.updateTaskStatus(task.id, 'delivered');
-                          toast.success("Доставка подтверждена! Платеж будет переведен курьеру.");
-                          window.location.reload(); // Reload to show updated status
-                        } catch (error: any) {
-                          toast.error(error.message || "Ошибка при обновлении статуса");
-                        }
-                      }}
-                    >
-                      <CheckCircle2 className="w-5 h-5 mr-2" />
-                      Подтвердить доставку
-                    </Button>
+                    <div className="space-y-2">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        id="delivered-photo-upload"
+                        className="hidden"
+                        onChange={async (e) => {
+                          const file = e.target.files?.[0];
+                          if (!file) return;
+                          
+                          try {
+                            toast.info("Загрузка фото...");
+                            const photoUrl = await api.uploadFile(file);
+                            await api.uploadConfirmationPhoto(task.id, 'delivered', photoUrl);
+                            await api.updateTaskStatus(task.id, 'delivered');
+                            toast.success("Доставка подтверждена с фото!");
+                            queryClient.invalidateQueries({ queryKey: ['task', id] });
+                            // Reset input
+                            e.target.value = '';
+                          } catch (error: any) {
+                            toast.error(error.message || "Ошибка при загрузке фото");
+                          }
+                        }}
+                      />
+                      <Button 
+                        size="lg" 
+                        className="w-full" 
+                        onClick={async () => {
+                          try {
+                            await api.updateTaskStatus(task.id, 'delivered');
+                            toast.success("Доставка подтверждена! Платеж будет переведен курьеру.");
+                            queryClient.invalidateQueries({ queryKey: ['task', id] });
+                          } catch (error: any) {
+                            toast.error(error.message || "Ошибка при обновлении статуса");
+                          }
+                        }}
+                      >
+                        <CheckCircle2 className="w-5 h-5 mr-2" />
+                        Подтвердить доставку (без фото)
+                      </Button>
+                      <Button 
+                        variant="outline"
+                        size="lg" 
+                        className="w-full" 
+                        onClick={() => document.getElementById('delivered-photo-upload')?.click()}
+                      >
+                        <Camera className="w-5 h-5 mr-2" />
+                        Подтвердить доставку (с фото)
+                      </Button>
+                    </div>
                   )}
                   
                   {task.status === 'delivered' && (

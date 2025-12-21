@@ -370,6 +370,58 @@ router.post('/:id/assign', authenticateToken, async (req: AuthRequest, res) => {
   }
 });
 
+// Upload confirmation photo
+router.post('/:id/confirmation-photo', authenticateToken, async (req: AuthRequest, res) => {
+  try {
+    const { id } = req.params;
+    const { photoType, photoUrl } = z.object({
+      photoType: z.enum(['received', 'delivered']),
+      photoUrl: z.string().url(),
+    }).parse(req.body);
+
+    // Check if user is authorized (sender or courier)
+    const taskResult = await pool.query(
+      'SELECT sender_id, courier_id, status FROM tasks WHERE id = $1',
+      [id]
+    );
+
+    if (taskResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Task not found' });
+    }
+
+    const task = taskResult.rows[0];
+
+    if (task.sender_id !== req.userId && task.courier_id !== req.userId) {
+      return res.status(403).json({ error: 'Not authorized' });
+    }
+
+    // Validate photo type and status
+    if (photoType === 'received' && task.courier_id !== req.userId) {
+      return res.status(403).json({ error: 'Only courier can upload received photo' });
+    }
+
+    if (photoType === 'delivered' && task.courier_id !== req.userId) {
+      return res.status(403).json({ error: 'Only courier can upload delivered photo' });
+    }
+
+    // Update appropriate photo field
+    const photoField = photoType === 'received' ? 'received_photo_url' : 'delivered_photo_url';
+    await pool.query(
+      `UPDATE tasks SET ${photoField} = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2`,
+      [photoUrl, id]
+    );
+
+    logger.info({ taskId: id, userId: req.userId, photoType }, 'Confirmation photo uploaded');
+    res.json({ success: true, photoUrl });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({ error: 'Invalid input', details: error.errors });
+    }
+    logger.error({ err: error, taskId: req.params.id, userId: req.userId }, 'Upload confirmation photo error');
+    res.status(500).json({ error: 'Failed to upload confirmation photo' });
+  }
+});
+
 // Update task status
 router.patch('/:id/status', authenticateToken, async (req: AuthRequest, res) => {
   try {

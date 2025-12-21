@@ -311,6 +311,44 @@ class ApiClient {
     );
   }
 
+  async uploadConfirmationPhoto(taskId: number, photoType: 'received' | 'delivered', photoUrl: string) {
+    return this.request<{ success: boolean; photoUrl: string }>(
+      `/tasks/${taskId}/confirmation-photo`,
+      {
+        method: 'POST',
+        body: JSON.stringify({ photoType, photoUrl }),
+      }
+    );
+  }
+
+  async uploadFile(file: File): Promise<string> {
+    const formData = new FormData();
+    formData.append('photo', file);
+
+    const token = getToken();
+    const response = await fetch(`${API_URL}/upload`, {
+      method: 'POST',
+      headers: token ? {
+        'Authorization': `Bearer ${token}`,
+      } : {},
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const error: ApiError = await response.json().catch(() => ({
+        error: 'Upload failed',
+      }));
+      throw new Error(error.error || 'Failed to upload file');
+    }
+
+    const data = await response.json();
+    // Return full URL
+    const baseUrl = API_URL.startsWith('/') 
+      ? window.location.origin 
+      : API_URL.replace('/api', '');
+    return `${baseUrl}${data.url}`;
+  }
+
   // Telegram
   async telegramAuth(initData: string) {
     return this.request<{

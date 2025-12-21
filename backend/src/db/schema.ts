@@ -35,6 +35,8 @@ export async function createTables() {
         size VARCHAR(10) NOT NULL CHECK (size IN ('S', 'M', 'L')),
         estimated_value INTEGER,
         photo_url VARCHAR(500),
+        received_photo_url VARCHAR(500),
+        delivered_photo_url VARCHAR(500),
         from_airport VARCHAR(10) NOT NULL,
         from_point VARCHAR(200),
         to_airport VARCHAR(10) NOT NULL,
