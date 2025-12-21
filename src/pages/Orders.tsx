@@ -251,14 +251,29 @@ export default function OrdersPage() {
                               </Button>
                             )}
 
-                            {/* Отправитель: может посмотреть задание если активное */}
+                            {/* Отправитель: может отменить задание если активное */}
                             {!isCourier && task.status === "active" && (
                               <Button
-                                variant="outline"
-                                onClick={() => navigate(`/tasks/${task.id}`)}
+                                variant="destructive"
+                                onClick={() => {
+                                  if (window.confirm('Вы уверены, что хотите отменить это задание?')) {
+                                    cancelTaskMutation.mutate(task.id);
+                                  }
+                                }}
+                                disabled={cancelTaskMutation.isPending}
                                 className="w-full"
                               >
-                                Посмотреть задание
+                                {cancelTaskMutation.isPending ? (
+                                  <>
+                                    <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                                    Отмена...
+                                  </>
+                                ) : (
+                                  <>
+                                    <X className="w-4 h-4 mr-2" />
+                                    Отменить задание
+                                  </>
+                                )}
                               </Button>
                             )}
                           </div>
