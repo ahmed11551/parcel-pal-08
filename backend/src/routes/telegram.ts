@@ -627,18 +627,52 @@ router.post('/notifications/:id/mark-sent', async (req, res) => {
 /**
  * GET /api/telegram/subscribers
  * Получить список подписанных пользователей (для бота)
+ * ?stats=true - получить статистику вместо списка
  */
 router.get('/subscribers', async (req, res) => {
   try {
-    const result = await pool.query(
-      `SELECT DISTINCT tu.telegram_id
-       FROM telegram_users tu
-       INNER JOIN telegram_subscriptions ts ON tu.telegram_id = ts.telegram_id
-       WHERE tu.subscribed = TRUE AND ts.active = TRUE
-       AND tu.telegram_id IS NOT NULL`
-    );
+    const { stats } = req.query; // ?stats=true для получения статистики
+    
+    if (stats === 'true') {
+      // Получить статистику подписок
+      const statsResult = await pool.query(`
+        SELECT 
+          COUNT(DISTINCT tu.telegram_id) as total_subscribed,
+          COUNT(DISTINCT CASE WHEN ts.subscription_type = 'all' THEN tu.telegram_id END) as subscribed_all,
+          COUNT(DISTINCT CASE WHEN ts.subscription_type = 'tasks' THEN tu.telegram_id END) as subscribed_tasks,
+          COUNT(DISTINCT CASE WHEN ts.subscription_type = 'notifications' THEN tu.telegram_id END) as subscribed_notifications,
+          COUNT(DISTINCT tu.telegram_id) FILTER (WHERE tu.subscribed = TRUE AND ts.active = TRUE) as active_subscriptions
+        FROM telegram_users tu
+        LEFT JOIN telegram_subscriptions ts ON tu.telegram_id = ts.telegram_id AND ts.active = TRUE
+        WHERE tu.subscribed = TRUE
+      `);
+      
+      const totalUsersResult = await pool.query(`
+        SELECT COUNT(*) as total_users FROM telegram_users
+      `);
+      
+      res.json({
+        stats: {
+          totalUsers: parseInt(totalUsersResult.rows[0].total_users) || 0,
+          totalSubscribed: parseInt(statsResult.rows[0].total_subscribed) || 0,
+          subscribedAll: parseInt(statsResult.rows[0].subscribed_all) || 0,
+          subscribedTasks: parseInt(statsResult.rows[0].subscribed_tasks) || 0,
+          subscribedNotifications: parseInt(statsResult.rows[0].subscribed_notifications) || 0,
+          activeSubscriptions: parseInt(statsResult.rows[0].active_subscriptions) || 0,
+        }
+      });
+    } else {
+      // Получить список подписчиков (для бота - только telegram_id)
+      const result = await pool.query(
+        `SELECT DISTINCT tu.telegram_id
+         FROM telegram_users tu
+         INNER JOIN telegram_subscriptions ts ON tu.telegram_id = ts.telegram_id
+         WHERE tu.subscribed = TRUE AND ts.active = TRUE
+         AND tu.telegram_id IS NOT NULL`
+      );
 
-    res.json({ subscribers: result.rows });
+      res.json({ subscribers: result.rows });
+    }
   } catch (error) {
     console.error('Get subscribers error:', error);
     res.status(500).json({ error: 'Failed to get subscribers' });

@@ -52,6 +52,7 @@ services:
       SMSRU_API_ID: ${SMSRU_API_ID:-}
       # Telegram Bot
       TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
+      ADMIN_TELEGRAM_IDS: ${ADMIN_TELEGRAM_IDS:-}
       # Альтернативные провайдеры (раскомментируйте при необходимости)
       # SMSCRU_LOGIN: ${SMSCRU_LOGIN:-}
       # SMSCRU_PASSWORD: ${SMSCRU_PASSWORD:-}
