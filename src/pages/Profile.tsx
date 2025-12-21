@@ -247,8 +247,8 @@ export default function ProfilePage() {
                 </div>
               </div>
 
-              {/* Reviews */}
-              {reviewsData?.data && reviewsData.data.length > 0 && (
+              {/* Reviews - будет добавлено позже */}
+              {false && reviewsData?.data && reviewsData.data.length > 0 && (
                 <div>
                   <h2 className="text-xl font-bold mb-4">Отзывы ({reviewsData.data.length})</h2>
                   <div className="space-y-4">
