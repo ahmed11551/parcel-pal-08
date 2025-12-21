@@ -1,12 +1,12 @@
 import { Telegraf, Context } from 'telegraf';
 import dotenv from 'dotenv';
-import { startCommand } from './commands/start';
-import { helpCommand } from './commands/help';
-import { supportCommand } from './commands/support';
-import { reviewsCommand } from './commands/reviews';
-import { messageHandler } from './handlers/messages';
-import { callbackHandler } from './handlers/callbacks';
-import { startNotificationService } from './services/notifications';
+import { startCommand } from './commands/start.js';
+import { helpCommand } from './commands/help.js';
+import { supportCommand } from './commands/support.js';
+import { reviewsCommand } from './commands/reviews.js';
+import { messageHandler } from './handlers/messages.js';
+import { callbackHandler } from './handlers/callbacks.js';
+import { startNotificationService } from './services/notifications.js';
 
 dotenv.config();
 

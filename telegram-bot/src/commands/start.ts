@@ -1,5 +1,5 @@
 import { Context } from 'telegraf';
-import { MINI_APP_URL } from '../index';
+import { MINI_APP_URL } from '../index.js';
 
 export const startCommand = async (ctx: Context) => {
   const firstName = ctx.from?.first_name || 'Пользователь';

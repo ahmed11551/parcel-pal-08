@@ -1,10 +1,10 @@
 import { Context } from 'telegraf';
-import { startCommand } from '../commands/start';
-import { helpCommand } from '../commands/help';
-import { supportCommand } from '../commands/support';
-import { reviewsCommand } from '../commands/reviews';
-import telegramAPI from '../utils/api';
-import { MINI_APP_URL } from '../index';
+import { startCommand } from '../commands/start.js';
+import { helpCommand } from '../commands/help.js';
+import { supportCommand } from '../commands/support.js';
+import { reviewsCommand } from '../commands/reviews.js';
+import telegramAPI from '../utils/api.js';
+import { MINI_APP_URL } from '../index.js';
 
 // Хранилище состояний пользователей (в production использовать Redis)
 const userStates = new Map<number, 'support' | 'review' | null>();
