@@ -478,6 +478,69 @@ router.patch('/:id/status', authenticateToken, async (req: AuthRequest, res) => 
   }
 });
 
+// Cancel task
+router.post('/:id/cancel', authenticateToken, async (req: AuthRequest, res) => {
+  try {
+    const { id } = req.params;
+
+    const taskResult = await pool.query(
+      'SELECT sender_id, courier_id, status FROM tasks WHERE id = $1',
+      [id]
+    );
+
+    if (taskResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Task not found' });
+    }
+
+    const task = taskResult.rows[0];
+
+    // Only sender can cancel (if no courier assigned) or courier can cancel if status is assigned
+    if (task.sender_id !== req.userId && task.courier_id !== req.userId) {
+      return res.status(403).json({ error: 'Not authorized to cancel this task' });
+    }
+
+    // Sender can cancel if status is active (no courier assigned)
+    if (task.sender_id === req.userId) {
+      if (task.status !== 'active') {
+        return res.status(400).json({ 
+          error: 'Can only cancel tasks that are active (no courier assigned yet)' 
+        });
+      }
+    }
+
+    // Courier can cancel if status is assigned
+    if (task.courier_id === req.userId) {
+      if (task.status !== 'assigned') {
+        return res.status(400).json({ 
+          error: 'Can only cancel assignment if task status is assigned' 
+        });
+      }
+      // If courier cancels, just remove courier assignment
+      await pool.query(
+        `UPDATE tasks SET courier_id = NULL, status = 'active', updated_at = CURRENT_TIMESTAMP 
+         WHERE id = $1`,
+        [id]
+      );
+
+      logger.info({ taskId: id, userId: req.userId, action: 'courier_cancelled' }, 'Courier cancelled assignment');
+      return res.json({ success: true, message: 'Assignment cancelled, task is now active again' });
+    }
+
+    // Sender cancels task completely
+    await pool.query(
+      `UPDATE tasks SET status = 'cancelled', updated_at = CURRENT_TIMESTAMP 
+       WHERE id = $1`,
+      [id]
+    );
+
+    logger.info({ taskId: id, userId: req.userId, action: 'sender_cancelled' }, 'Task cancelled by sender');
+    res.json({ success: true, message: 'Task cancelled successfully' });
+  } catch (error) {
+    logger.error({ err: error, taskId: req.params.id, userId: req.userId }, 'Cancel task error');
+    res.status(500).json({ error: 'Failed to cancel task' });
+  }
+});
+
 // Confirm payment (sender confirms they sent the payment)
 router.post('/:id/confirm-payment', authenticateToken, async (req: AuthRequest, res) => {
   try {
