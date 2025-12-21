@@ -19,12 +19,25 @@ if ! grep -q "TELEGRAM_BOT_TOKEN=" .env.production; then
     echo "TELEGRAM_BOT_TOKEN=8146754886:AAF0KRnXaCU3RwwqLSR0YomJkFbG6UFx8l4" >> .env.production
     echo "✅ Токен добавлен!"
 else
-    echo "✅ TELEGRAM_BOT_TOKEN уже настроен"
+    echo "📝 Обновляю TELEGRAM_BOT_TOKEN в .env.production..."
+    # Удаляем старую строку и добавляем новую
+    sed -i '/^TELEGRAM_BOT_TOKEN=/d' .env.production
+    echo "TELEGRAM_BOT_TOKEN=8146754886:AAF0KRnXaCU3RwwqLSR0YomJkFbG6UFx8l4" >> .env.production
+    echo "✅ Токен обновлен!"
+fi
+
+# Проверяем, что токен действительно в файле
+if grep -q "TELEGRAM_BOT_TOKEN=8146754886" .env.production; then
+    echo "✅ Токен подтвержден в .env.production"
+else
+    echo "❌ Ошибка: токен не найден в .env.production"
+    exit 1
 fi
 
 echo ""
 echo "🔄 Перезапускаю контейнеры для применения изменений..."
-docker compose down telegram-bot 2>/dev/null || true
+docker compose stop telegram-bot 2>/dev/null || true
+docker compose rm -f telegram-bot 2>/dev/null || true
 docker compose up -d telegram-bot
 
 echo ""
