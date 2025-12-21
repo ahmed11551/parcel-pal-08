@@ -210,10 +210,61 @@ export default function TaskDetailPage() {
               )}
 
               {isAssigned && (
-                <div className="space-y-2">
-                  <div className="text-sm text-primary text-center font-semibold">
+                <div className="space-y-4">
+                  <div className="text-sm text-primary text-center font-semibold mb-4">
                     Вы назначены курьером этого задания
                   </div>
+                  
+                  {/* Actions for courier based on status */}
+                  {task.status === 'assigned' && (
+                    <Button 
+                      size="lg" 
+                      className="w-full" 
+                      onClick={async () => {
+                        try {
+                          await api.updateTaskStatus(task.id, 'in_transit');
+                          toast.success("Посылка отмечена как полученная! Теперь она в пути.");
+                          window.location.reload(); // Reload to show updated status
+                        } catch (error: any) {
+                          toast.error(error.message || "Ошибка при обновлении статуса");
+                        }
+                      }}
+                    >
+                      <CheckCircle2 className="w-5 h-5 mr-2" />
+                      Получил посылку (В пути)
+                    </Button>
+                  )}
+                  
+                  {task.status === 'in_transit' && (
+                    <Button 
+                      size="lg" 
+                      className="w-full" 
+                      onClick={async () => {
+                        try {
+                          await api.updateTaskStatus(task.id, 'delivered');
+                          toast.success("Доставка подтверждена! Платеж будет переведен курьеру.");
+                          window.location.reload(); // Reload to show updated status
+                        } catch (error: any) {
+                          toast.error(error.message || "Ошибка при обновлении статуса");
+                        }
+                      }}
+                    >
+                      <CheckCircle2 className="w-5 h-5 mr-2" />
+                      Подтвердить доставку
+                    </Button>
+                  )}
+                  
+                  {task.status === 'delivered' && (
+                    <div className="text-center p-4 bg-green-50 dark:bg-green-900/20 rounded-xl">
+                      <CheckCircle2 className="w-8 h-8 text-green-600 dark:text-green-400 mx-auto mb-2" />
+                      <div className="font-semibold text-green-900 dark:text-green-100">
+                        Доставка завершена!
+                      </div>
+                      <div className="text-sm text-green-700 dark:text-green-300 mt-1">
+                        Платеж будет переведен на ваш счет
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
 

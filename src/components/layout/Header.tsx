@@ -77,7 +77,7 @@ export function Header() {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                   <DropdownMenuItem asChild>
-                    <Link to="/tasks" className="cursor-pointer">
+                    <Link to="/orders" className="cursor-pointer">
                       <User className="w-4 h-4 mr-2" />
                       Мои задания
                     </Link>

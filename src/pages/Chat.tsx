@@ -2,7 +2,7 @@ import { Layout } from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { chatAPI, ordersAPI } from "@/lib/api";
+import { api } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { ArrowLeft, Send, Loader2, User } from "lucide-react";
@@ -18,9 +18,9 @@ export default function ChatPage() {
   const [message, setMessage] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  const { data: order } = useQuery({
-    queryKey: ["order", orderId],
-    queryFn: () => ordersAPI.getById(orderId!),
+  const { data: task } = useQuery({
+    queryKey: ["task", orderId],
+    queryFn: () => api.getTask(Number(orderId!)),
     enabled: !!orderId,
   });
 
