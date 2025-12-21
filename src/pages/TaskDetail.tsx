@@ -78,11 +78,32 @@ export default function TaskDetailPage() {
     );
   }
 
+  const queryClient = useQueryClient();
+  const [showPaymentDetails, setShowPaymentDetails] = useState(false);
+
   const fromInfo = getAirportInfo(task.from?.airport || '');
   const toInfo = getAirportInfo(task.to?.airport || '');
   const isOwner = currentUser?.id === task.sender?.id;
   const isAssigned = task.courierId && task.courierId === currentUser?.id;
   const canAssign = !isOwner && !task.courierId && task.status === 'active' && api.isAuthenticated();
+
+  // Get payment details for courier
+  const { data: paymentDetails } = useQuery({
+    queryKey: ['paymentDetails', task.id],
+    queryFn: () => api.getPaymentDetails(task.id),
+    enabled: isOwner && (task.status === 'assigned' || task.status === 'in_transit') && !!task.courierId,
+  });
+
+  const confirmPaymentMutation = useMutation({
+    mutationFn: () => api.confirmPayment(task.id),
+    onSuccess: () => {
+      toast.success("Перевод подтвержден!");
+      queryClient.invalidateQueries({ queryKey: ['task', id] });
+    },
+    onError: (error: any) => {
+      toast.error(error.message || "Ошибка при подтверждении перевода");
+    },
+  });
 
   return (
     <Layout>
@@ -205,13 +226,108 @@ export default function TaskDetailPage() {
                   
                   {/* Status info for owner */}
                   {task.status === 'assigned' && task.courier && (
-                    <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl">
-                      <div className="font-semibold text-blue-900 dark:text-blue-100 mb-1">
-                        Курьер назначен: {task.courier.name}
+                    <div className="space-y-4">
+                      <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl">
+                        <div className="font-semibold text-blue-900 dark:text-blue-100 mb-1">
+                          Курьер назначен: {task.courier.name}
+                        </div>
+                        <div className="text-sm text-blue-700 dark:text-blue-300">
+                          Переведите вознаграждение курьеру через СБП
+                        </div>
                       </div>
-                      <div className="text-sm text-blue-700 dark:text-blue-300">
-                        Ожидайте подтверждения получения посылки
-                      </div>
+                      
+                      {/* Payment details */}
+                      {paymentDetails && (
+                        <div className="p-4 bg-card border border-border rounded-xl">
+                          <div className="flex items-center justify-between mb-3">
+                            <h3 className="font-semibold text-foreground flex items-center gap-2">
+                              <CreditCard className="w-5 h-5" />
+                              Реквизиты для перевода
+                            </h3>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => setShowPaymentDetails(!showPaymentDetails)}
+                            >
+                              {showPaymentDetails ? "Скрыть" : "Показать"}
+                            </Button>
+                          </div>
+                          
+                          {showPaymentDetails && (
+                            <div className="space-y-3">
+                              {paymentDetails.phoneSbp && (
+                                <div>
+                                  <div className="text-sm text-muted-foreground mb-1">Номер телефона (СБП)</div>
+                                  <div className="flex items-center gap-2">
+                                    <code className="px-3 py-2 bg-muted rounded-lg font-mono text-lg">
+                                      {paymentDetails.phoneSbp}
+                                    </code>
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => {
+                                        navigator.clipboard.writeText(paymentDetails.phoneSbp || '');
+                                        toast.success("Номер скопирован!");
+                                      }}
+                                    >
+                                      <Copy className="w-4 h-4" />
+                                    </Button>
+                                  </div>
+                                  <p className="text-xs text-muted-foreground mt-1">
+                                    Переведите сумму {task.reward?.toLocaleString()} ₽ через СБП по номеру телефона
+                                  </p>
+                                </div>
+                              )}
+                              
+                              {paymentDetails.accountNumber && (
+                                <div>
+                                  <div className="text-sm text-muted-foreground mb-1">Расчетный счет</div>
+                                  <div className="flex items-center gap-2">
+                                    <code className="px-3 py-2 bg-muted rounded-lg font-mono text-sm">
+                                      {paymentDetails.accountNumber}
+                                    </code>
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => {
+                                        navigator.clipboard.writeText(paymentDetails.accountNumber || '');
+                                        toast.success("Счет скопирован!");
+                                      }}
+                                    >
+                                      <Copy className="w-4 h-4" />
+                                    </Button>
+                                  </div>
+                                  {paymentDetails.bankName && (
+                                    <p className="text-xs text-muted-foreground mt-1">
+                                      Банк: {paymentDetails.bankName}
+                                    </p>
+                                  )}
+                                </div>
+                              )}
+                              
+                              <div className="pt-3 border-t border-border">
+                                <Button
+                                  className="w-full"
+                                  onClick={() => confirmPaymentMutation.mutate()}
+                                  disabled={confirmPaymentMutation.isPending}
+                                >
+                                  {confirmPaymentMutation.isPending ? (
+                                    <>
+                                      <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                                      Подтверждение...
+                                    </>
+                                  ) : (
+                                    <>
+                                      <CheckCircle2 className="w-4 h-4 mr-2" />
+                                      Я перевел деньги
+                                    </>
+                                  )}
+                                </Button>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
                   )}
                   
