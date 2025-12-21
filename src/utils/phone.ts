@@ -15,9 +15,10 @@ export function normalizePhone(phone: string): string {
 export function formatPhone(phone: string): string {
   const normalized = normalizePhone(phone);
   
-  if (normalized.length === 11 && normalized.startsWith('7')) {
-    // Российский номер: +7 (999) 123-45-67
-    return `+7 (${normalized.slice(1, 4)}) ${normalized.slice(4, 7)}-${normalized.slice(7, 9)}-${normalized.slice(9)}`;
+  if (normalized.length === 11 && (normalized.startsWith('7') || normalized.startsWith('8'))) {
+    // Российский номер: +7 (999) 123-45-67 (обрабатываем и 7 и 8)
+    const digits = normalized.startsWith('8') ? normalized.slice(1) : normalized.slice(1);
+    return `+7 (${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6, 8)}-${digits.slice(8)}`;
   } else if (normalized.length === 10) {
     // Номер без кода страны: (999) 123-45-67
     return `+7 (${normalized.slice(0, 3)}) ${normalized.slice(3, 6)}-${normalized.slice(6, 8)}-${normalized.slice(8)}`;
@@ -31,8 +32,8 @@ export function formatPhone(phone: string): string {
  */
 export function validatePhone(phone: string): boolean {
   const normalized = normalizePhone(phone);
-  // Российский номер: 11 цифр (начинается с 7) или 10 цифр
-  return (normalized.length === 11 && normalized.startsWith('7')) || normalized.length === 10;
+  // Российский номер: 11 цифр (начинается с 7 или 8) или 10 цифр
+  return (normalized.length === 11 && (normalized.startsWith('7') || normalized.startsWith('8'))) || normalized.length === 10;
 }
 
 /**

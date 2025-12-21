@@ -23,16 +23,7 @@ const sizeOptions = [
   { value: "L", label: "Большой", description: "3-5 кг, требует отдельного места" },
 ];
 
-const airports = [
-  { code: "SVO", name: "Шереметьево", city: "Москва" },
-  { code: "DME", name: "Домодедово", city: "Москва" },
-  { code: "VKO", name: "Внуково", city: "Москва" },
-  { code: "LED", name: "Пулково", city: "Санкт-Петербург" },
-  { code: "KZN", name: "Казань", city: "Казань" },
-  { code: "SVX", name: "Кольцово", city: "Екатеринбург" },
-  { code: "AER", name: "Сочи", city: "Сочи" },
-  { code: "ROV", name: "Платов", city: "Ростов-на-Дону" },
-];
+import { airports } from "@/utils/airports";
 
 export default function CreateTaskPage() {
   const navigate = useNavigate();

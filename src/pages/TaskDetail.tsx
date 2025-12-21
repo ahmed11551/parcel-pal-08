@@ -24,15 +24,12 @@ const sizeLabels: Record<string, string> = {
   L: "Большой",
 };
 
-const airportNames: Record<string, { city: string; name: string }> = {
-  SVO: { city: "Москва", name: "Шереметьево" },
-  DME: { city: "Москва", name: "Домодедово" },
-  VKO: { city: "Москва", name: "Внуково" },
-  LED: { city: "Санкт-Петербург", name: "Пулково" },
-  KZN: { city: "Казань", name: "Казань" },
-  SVX: { city: "Екатеринбург", name: "Кольцово" },
-  AER: { city: "Сочи", name: "Сочи" },
-  ROV: { city: "Ростов-на-Дону", name: "Платов" },
+import { getAirportByCode } from "@/utils/airports";
+
+// Функция для получения информации об аэропорте
+const getAirportInfo = (code: string) => {
+  const airport = getAirportByCode(code);
+  return airport ? { city: airport.city, name: airport.name } : { city: code, name: code };
 };
 
 export default function TaskDetailPage() {
@@ -80,8 +77,8 @@ export default function TaskDetailPage() {
     );
   }
 
-  const fromInfo = airportNames[task.from?.airport] || { city: task.from?.airport, name: task.from?.airport };
-  const toInfo = airportNames[task.to?.airport] || { city: task.to?.airport, name: task.to?.airport };
+  const fromInfo = getAirportInfo(task.from?.airport || '');
+  const toInfo = getAirportInfo(task.to?.airport || '');
   const isOwner = currentUser?.id === task.sender?.id;
   const isAssigned = task.courierId && task.courierId === currentUser?.id;
   const canAssign = !isOwner && !task.courierId && task.status === 'active' && api.isAuthenticated();
