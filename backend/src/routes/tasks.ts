@@ -478,5 +478,112 @@ router.patch('/:id/status', authenticateToken, async (req: AuthRequest, res) => 
   }
 });
 
+// Get user's tasks (as sender or courier)
+router.get('/my', authenticateToken, async (req: AuthRequest, res) => {
+  try {
+    const { role, status } = req.query; // role: 'sender' | 'courier', status: optional filter
+    
+    let query = '';
+    const params: any[] = [req.userId];
+    
+    if (role === 'sender') {
+      query = `
+        SELECT 
+          t.*,
+          u.name as sender_name,
+          u.rating as sender_rating,
+          u.deliveries_count as sender_deliveries,
+          c.name as courier_name,
+          c.rating as courier_rating,
+          c.id as courier_id
+        FROM tasks t
+        LEFT JOIN users u ON t.sender_id = u.id
+        LEFT JOIN users c ON t.courier_id = c.id
+        WHERE t.sender_id = $1
+      `;
+    } else if (role === 'courier') {
+      query = `
+        SELECT 
+          t.*,
+          u.name as sender_name,
+          u.rating as sender_rating,
+          u.deliveries_count as sender_deliveries,
+          c.name as courier_name,
+          c.rating as courier_rating,
+          c.id as courier_id
+        FROM tasks t
+        LEFT JOIN users u ON t.sender_id = u.id
+        LEFT JOIN users c ON t.courier_id = c.id
+        WHERE t.courier_id = $1
+      `;
+    } else {
+      // Both roles
+      query = `
+        SELECT 
+          t.*,
+          u.name as sender_name,
+          u.rating as sender_rating,
+          u.deliveries_count as sender_deliveries,
+          c.name as courier_name,
+          c.rating as courier_rating,
+          c.id as courier_id
+        FROM tasks t
+        LEFT JOIN users u ON t.sender_id = u.id
+        LEFT JOIN users c ON t.courier_id = c.id
+        WHERE t.sender_id = $1 OR t.courier_id = $1
+      `;
+    }
+    
+    if (status) {
+      query += ` AND t.status = $2`;
+      params.push(status);
+    }
+    
+    query += ` ORDER BY t.created_at DESC`;
+    
+    const result = await pool.query(query, params);
+    
+    const tasks = result.rows.map(task => ({
+      id: task.id,
+      title: task.title,
+      description: task.description,
+      size: task.size,
+      estimatedValue: task.estimated_value,
+      photoUrl: task.photo_url,
+      from: {
+        airport: task.from_airport,
+        point: task.from_point
+      },
+      to: {
+        airport: task.to_airport,
+        point: task.to_point
+      },
+      dateFrom: task.date_from,
+      dateTo: task.date_to,
+      reward: task.reward,
+      status: task.status,
+      sender: {
+        id: task.sender_id,
+        name: task.sender_name,
+        rating: task.sender_rating,
+        deliveries: task.sender_deliveries
+      },
+      courier: task.courier_id ? {
+        id: task.courier_id,
+        name: task.courier_name,
+        rating: task.courier_rating
+      } : null,
+      courierId: task.courier_id,
+      createdAt: task.created_at,
+      updatedAt: task.updated_at
+    }));
+    
+    res.json({ tasks });
+  } catch (error) {
+    logger.error({ err: error, userId: req.userId }, 'Get my tasks error');
+    res.status(500).json({ error: 'Failed to get my tasks' });
+  }
+});
+
 export default router;
 

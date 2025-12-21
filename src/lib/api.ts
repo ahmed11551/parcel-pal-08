@@ -201,6 +201,14 @@ class ApiClient {
     );
   }
 
+  async getMyTasks(role?: 'sender' | 'courier', status?: string) {
+    const params = new URLSearchParams();
+    if (role) params.append('role', role);
+    if (status) params.append('status', status);
+    const query = params.toString();
+    return this.request<{ tasks: any[] }>(`/tasks/my${query ? `?${query}` : ''}`);
+  }
+
   // Upload
   async uploadPhoto(file: File): Promise<string> {
     const formData = new FormData();
