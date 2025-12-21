@@ -16,7 +16,7 @@ import {
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { toast } from "sonner";
-import { Loader2, CreditCard, Copy } from "lucide-react";
+import { Loader2, CreditCard, Copy, Camera } from "lucide-react";
 import { useState } from "react";
 
 const sizeLabels: Record<string, string> = {
@@ -415,6 +415,28 @@ export default function TaskDetailPage() {
                   {/* Actions for courier based on status */}
                   {task.status === 'assigned' && (
                     <div className="space-y-2">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        id="received-photo-upload"
+                        className="hidden"
+                        onChange={async (e) => {
+                          const file = e.target.files?.[0];
+                          if (!file) return;
+                          
+                          try {
+                            toast.info("Загрузка фото...");
+                            const photoUrl = await api.uploadFile(file);
+                            await api.uploadConfirmationPhoto(task.id, 'received', photoUrl);
+                            await api.updateTaskStatus(task.id, 'in_transit');
+                            toast.success("Посылка отмечена как полученная с фото!");
+                            queryClient.invalidateQueries({ queryKey: ['task', id] });
+                            e.target.value = '';
+                          } catch (error: any) {
+                            toast.error(error.message || "Ошибка при загрузке фото");
+                          }
+                        }}
+                      />
                       <Button 
                         size="lg" 
                         className="w-full" 
@@ -422,17 +444,26 @@ export default function TaskDetailPage() {
                           try {
                             await api.updateTaskStatus(task.id, 'in_transit');
                             toast.success("Посылка отмечена как полученная! Теперь она в пути.");
-                            window.location.reload(); // Reload to show updated status
+                            queryClient.invalidateQueries({ queryKey: ['task', id] });
                           } catch (error: any) {
                             toast.error(error.message || "Ошибка при обновлении статуса");
                           }
                         }}
                       >
                         <CheckCircle2 className="w-5 h-5 mr-2" />
-                        Получил посылку (В пути)
+                        Получил посылку (без фото)
                       </Button>
                       <Button 
-                        variant="outline" 
+                        variant="outline"
+                        size="lg" 
+                        className="w-full" 
+                        onClick={() => document.getElementById('received-photo-upload')?.click()}
+                      >
+                        <Camera className="w-5 h-5 mr-2" />
+                        Получил посылку (с фото)
+                      </Button>
+                      <Button 
+                        variant="ghost" 
                         size="lg" 
                         className="w-full"
                         onClick={() => {
