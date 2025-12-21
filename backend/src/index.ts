@@ -77,9 +77,38 @@ app.use('/api/users', userRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/telegram', telegramRoutes);
 
-// Health check
-app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+// Health check with database connectivity
+app.get('/api/health', async (req, res) => {
+  try {
+    // Проверка подключения к базе данных
+    const dbCheck = await pool.query('SELECT 1 as health');
+    const dbHealthy = dbCheck.rows.length > 0;
+    
+    // Проверка обязательных переменных окружения
+    const envCheck = {
+      jwtSecret: !!process.env.JWT_SECRET,
+      databaseUrl: !!process.env.DATABASE_URL,
+      telegramBotToken: !!process.env.TELEGRAM_BOT_TOKEN,
+    };
+    
+    const allHealthy = dbHealthy && envCheck.jwtSecret && envCheck.databaseUrl;
+    
+    res.status(allHealthy ? 200 : 503).json({
+      status: allHealthy ? 'ok' : 'degraded',
+      timestamp: new Date().toISOString(),
+      checks: {
+        database: dbHealthy ? 'ok' : 'error',
+        environment: envCheck,
+      },
+    });
+  } catch (error) {
+    logger.error({ err: error }, 'Health check failed');
+    res.status(503).json({
+      status: 'error',
+      timestamp: new Date().toISOString(),
+      error: 'Health check failed',
+    });
+  }
 });
 
 // Metrics endpoint
