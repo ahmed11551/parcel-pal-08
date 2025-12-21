@@ -735,6 +735,11 @@ router.get('/my', authenticateToken, async (req: AuthRequest, res) => {
       params.push(status);
     }
     
+    // Exclude deleted tasks from "my tasks" unless includeDeleted=true
+    if (req.query.includeDeleted !== 'true') {
+      query += ` AND t.deleted_at IS NULL`;
+    }
+    
     query += ` ORDER BY t.created_at DESC`;
     
     const result = await pool.query(query, params);
