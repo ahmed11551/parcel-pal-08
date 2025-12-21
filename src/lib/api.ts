@@ -321,6 +321,23 @@ class ApiClient {
     );
   }
 
+  async createReport(data: {
+    reportedUserId?: number;
+    taskId?: number;
+    type: 'user' | 'task' | 'other';
+    reason: string;
+    description: string;
+  }) {
+    return this.request<{ success: boolean; id: number; message: string }>('/reports', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async getMyReports() {
+    return this.request<{ reports: any[] }>('/reports/my');
+  }
+
   async uploadFile(file: File): Promise<string> {
     const formData = new FormData();
     formData.append('photo', file);

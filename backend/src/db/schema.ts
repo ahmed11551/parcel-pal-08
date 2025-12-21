@@ -130,6 +130,23 @@ export async function createTables() {
       )
     `);
 
+    // Reports/Complaints table
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS reports (
+        id SERIAL PRIMARY KEY,
+        reporter_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+        reported_user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+        task_id INTEGER REFERENCES tasks(id) ON DELETE SET NULL,
+        type VARCHAR(50) NOT NULL CHECK (type IN ('user', 'task', 'other')),
+        reason VARCHAR(100) NOT NULL,
+        description TEXT NOT NULL,
+        status VARCHAR(20) DEFAULT 'pending' CHECK (status IN ('pending', 'reviewing', 'resolved', 'dismissed')),
+        admin_notes TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
     // Support messages table
     await client.query(`
       CREATE TABLE IF NOT EXISTS support_messages (

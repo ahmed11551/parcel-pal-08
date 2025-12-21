@@ -206,6 +206,21 @@ export default function TaskDetailPage() {
                 </div>
               </div>
 
+              {/* Report Button */}
+              {currentUser && (isOwner || isAssigned) && task.status !== 'cancelled' && (
+                <div className="border-t border-border pt-4 mb-6">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setShowReportDialog(true)}
+                    className="text-destructive hover:text-destructive"
+                  >
+                    <Flag className="w-4 h-4 mr-2" />
+                    Пожаловаться
+                  </Button>
+                </div>
+              )}
+
               {/* Sender */}
               <div className="border-t border-border pt-6 mb-6">
                 <div className="flex items-center gap-4">
