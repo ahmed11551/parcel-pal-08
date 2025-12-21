@@ -16,6 +16,9 @@ export async function createTables() {
         verified BOOLEAN DEFAULT FALSE,
         rating DECIMAL(3,2) DEFAULT 5.0,
         deliveries_count INTEGER DEFAULT 0,
+        phone_sbp VARCHAR(20),
+        account_number VARCHAR(50),
+        bank_name VARCHAR(100),
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )

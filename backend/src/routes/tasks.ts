@@ -478,6 +478,44 @@ router.patch('/:id/status', authenticateToken, async (req: AuthRequest, res) => 
   }
 });
 
+// Confirm payment (sender confirms they sent the payment)
+router.post('/:id/confirm-payment', authenticateToken, async (req: AuthRequest, res) => {
+  try {
+    const { id } = req.params;
+
+    const taskResult = await pool.query(
+      'SELECT sender_id, status FROM tasks WHERE id = $1',
+      [id]
+    );
+
+    if (taskResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Task not found' });
+    }
+
+    const task = taskResult.rows[0];
+
+    if (task.sender_id !== req.userId) {
+      return res.status(403).json({ error: 'Only task sender can confirm payment' });
+    }
+
+    if (task.status !== 'assigned' && task.status !== 'in_transit') {
+      return res.status(400).json({ error: 'Payment can only be confirmed for assigned or in_transit tasks' });
+    }
+
+    // Update payment status to 'held' (means payment is confirmed by sender)
+    await pool.query(
+      `UPDATE payments SET status = 'held', updated_at = CURRENT_TIMESTAMP 
+       WHERE task_id = $1`,
+      [id]
+    );
+
+    res.json({ success: true, message: 'Payment confirmed' });
+  } catch (error) {
+    logger.error({ err: error, taskId: req.params.id, userId: req.userId }, 'Confirm payment error');
+    res.status(500).json({ error: 'Failed to confirm payment' });
+  }
+});
+
 // Get user's tasks (as sender or courier)
 router.get('/my', authenticateToken, async (req: AuthRequest, res) => {
   try {

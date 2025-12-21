@@ -245,6 +245,39 @@ class ApiClient {
     return this.request<any>(`/users/${id}`);
   }
 
+  async getMe() {
+    return this.request<any>('/users/me');
+  }
+
+  async updateProfile(data: {
+    name?: string;
+    phoneSbp?: string;
+    accountNumber?: string;
+    bankName?: string;
+  }) {
+    return this.request<any>('/users/me', {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async getPaymentDetails(taskId: number) {
+    return this.request<{
+      phoneSbp?: string;
+      accountNumber?: string;
+      bankName?: string;
+    }>(`/users/tasks/${taskId}/payment-details`);
+  }
+
+  async confirmPayment(taskId: number) {
+    return this.request<{ success: boolean; message: string }>(
+      `/tasks/${taskId}/confirm-payment`,
+      {
+        method: 'POST',
+      }
+    );
+  }
+
   // Telegram
   async telegramAuth(initData: string) {
     return this.request<{
