@@ -197,13 +197,49 @@ export default function TaskDetailPage() {
               )}
 
               {isOwner && (
-                <div className="space-y-2">
+                <div className="space-y-4">
                   <div className="text-sm text-muted-foreground text-center">
                     Это ваше задание
                   </div>
+                  
+                  {/* Status info for owner */}
+                  {task.status === 'assigned' && task.courier && (
+                    <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl">
+                      <div className="font-semibold text-blue-900 dark:text-blue-100 mb-1">
+                        Курьер назначен: {task.courier.name}
+                      </div>
+                      <div className="text-sm text-blue-700 dark:text-blue-300">
+                        Ожидайте подтверждения получения посылки
+                      </div>
+                    </div>
+                  )}
+                  
+                  {task.status === 'in_transit' && (
+                    <div className="p-4 bg-indigo-50 dark:bg-indigo-900/20 rounded-xl">
+                      <div className="font-semibold text-indigo-900 dark:text-indigo-100 mb-1">
+                        Посылка в пути
+                      </div>
+                      <div className="text-sm text-indigo-700 dark:text-indigo-300">
+                        Курьер везет вашу посылку
+                      </div>
+                    </div>
+                  )}
+                  
+                  {task.status === 'delivered' && (
+                    <div className="p-4 bg-green-50 dark:bg-green-900/20 rounded-xl">
+                      <CheckCircle2 className="w-6 h-6 text-green-600 dark:text-green-400 mb-2" />
+                      <div className="font-semibold text-green-900 dark:text-green-100 mb-1">
+                        Доставка завершена!
+                      </div>
+                      <div className="text-sm text-green-700 dark:text-green-300">
+                        Посылка успешно доставлена
+                      </div>
+                    </div>
+                  )}
+                  
                   <Button variant="outline" size="lg" className="w-full" asChild>
-                    <Link to="/tasks">
-                      Посмотреть другие задания
+                    <Link to="/orders">
+                      Мои задания
                     </Link>
                   </Button>
                 </div>
