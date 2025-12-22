@@ -839,8 +839,8 @@ router.get('/:id/messages', authenticateToken, async (req: AuthRequest, res) => 
   }
 });
 
-// Send message
-router.post('/:id/messages', authenticateToken, async (req: AuthRequest, res) => {
+// Send message (с rate limiting)
+router.post('/:id/messages', authenticateToken, messageRateLimit, async (req: AuthRequest, res) => {
   try {
     const { id } = req.params;
     const { content } = z.object({
