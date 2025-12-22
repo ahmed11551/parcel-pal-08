@@ -112,11 +112,22 @@ export const isTelegramWebApp = (): boolean => {
 
 export const initTelegramWebApp = () => {
   if (isTelegramWebApp()) {
-    const tg = window.Telegram!.WebApp;
-    // ready() уже вызван в index.html, но вызываем для совместимости
-    tg.ready();
-    tg.expand();
-    return tg;
+    try {
+      const tg = window.Telegram!.WebApp;
+      // ready() может быть вызван в index.html, но вызываем для совместимости
+      // Безопасно вызывать несколько раз
+      tg.ready();
+      
+      // expand() вызываем только если еще не расширен
+      // Это предотвращает ошибки при повторной инициализации
+      if (!tg.isExpanded) {
+        tg.expand();
+      }
+      return tg;
+    } catch (error) {
+      console.warn('Error initializing Telegram WebApp:', error);
+      return null;
+    }
   }
   return null;
 };
@@ -191,15 +202,30 @@ export const applyTelegramTheme = () => {
 };
 
 // Инициализация при загрузке приложения
+// Используем DOMContentLoaded чтобы избежать проблем с ранней инициализацией
 if (typeof window !== 'undefined') {
-  if (isTelegramWebApp()) {
-    const tg = initTelegramWebApp();
-    if (tg) {
-      applyTelegramTheme();
-      
-      // Слушаем изменения темы
-      tg.onEvent('themeChanged', applyTelegramTheme);
+  const initializeTelegram = () => {
+    if (isTelegramWebApp()) {
+      try {
+        const tg = initTelegramWebApp();
+        if (tg) {
+          applyTelegramTheme();
+          
+          // Слушаем изменения темы
+          tg.onEvent('themeChanged', applyTelegramTheme);
+        }
+      } catch (error) {
+        console.warn('Telegram WebApp initialization error:', error);
+      }
     }
+  };
+
+  // Инициализируем после загрузки DOM
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeTelegram);
+  } else {
+    // DOM уже загружен
+    initializeTelegram();
   }
 }
 

@@ -13,11 +13,19 @@
     <!-- Initialize Telegram WebApp immediately to hide loading screen -->
     <script>
       (function() {
-        if (window.Telegram && window.Telegram.WebApp) {
-          // Call ready() immediately to hide loading screen
-          window.Telegram.WebApp.ready();
-          // Expand to fullscreen
-          window.Telegram.WebApp.expand();
+        try {
+          if (window.Telegram && window.Telegram.WebApp) {
+            const tg = window.Telegram.WebApp;
+            // Call ready() immediately to hide loading screen
+            // ready() безопасно вызывать несколько раз
+            tg.ready();
+            // Expand только если еще не расширен (предотвращает ошибки)
+            if (!tg.isExpanded) {
+              tg.expand();
+            }
+          }
+        } catch (error) {
+          console.warn('Telegram WebApp init error:', error);
         }
       })();
     </script>
