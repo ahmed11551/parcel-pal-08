@@ -4,19 +4,27 @@ import { Telegraf } from 'telegraf';
  * Проверяет, подписан ли пользователь на канал
  * @param bot - Экземпляр бота
  * @param userId - Telegram ID пользователя
- * @param channelUsername - Username канала (например: @SendBuddyNews)
+ * @param channelIdentifier - Username канала (@SendBuddyNews) или chat_id (для приватных каналов)
  * @returns true если подписан, false если нет
  */
 export async function checkChannelSubscription(
   bot: Telegraf,
   userId: number,
-  channelUsername: string
+  channelIdentifier: string
 ): Promise<boolean> {
   try {
-    // Убираем @ если есть
-    const channelId = channelUsername.startsWith('@') 
-      ? channelUsername 
-      : `@${channelUsername}`;
+    // Если это invite link (начинается с +), извлекаем chat_id из ссылки
+    // или используем как есть если это username
+    let channelId = channelIdentifier;
+    
+    // Если это username, добавляем @ если нужно
+    if (!channelIdentifier.startsWith('+') && !channelIdentifier.startsWith('-')) {
+      channelId = channelIdentifier.startsWith('@') 
+        ? channelIdentifier 
+        : `@${channelIdentifier}`;
+    }
+    // Если это invite link, нужно получить chat_id из ссылки
+    // Для приватных каналов лучше использовать chat_id напрямую
 
     const member = await bot.telegram.getChatMember(channelId, userId);
     
@@ -41,11 +49,23 @@ export async function checkChannelSubscription(
 
 /**
  * Получает ссылку на канал
+ * @param channelIdentifier - Username (@SendBuddyNews) или invite link (https://t.me/+...)
  */
-export function getChannelLink(channelUsername: string): string {
-  const username = channelUsername.startsWith('@') 
-    ? channelUsername.slice(1) 
-    : channelUsername;
+export function getChannelLink(channelIdentifier: string): string {
+  // Если это уже полная ссылка, возвращаем как есть
+  if (channelIdentifier.startsWith('http')) {
+    return channelIdentifier;
+  }
+  
+  // Если это invite link формат (начинается с +), формируем ссылку
+  if (channelIdentifier.startsWith('+')) {
+    return `https://t.me/${channelIdentifier}`;
+  }
+  
+  // Для username канала
+  const username = channelIdentifier.startsWith('@') 
+    ? channelIdentifier.slice(1) 
+    : channelIdentifier;
   return `https://t.me/${username}`;
 }
 
