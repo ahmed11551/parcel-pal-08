@@ -161,6 +161,62 @@ export const callbackHandler = async (ctx: Context) => {
       }
       break;
 
+    case 'check_subscription':
+      if (telegramId && CHANNEL_USERNAME) {
+        try {
+          const isSubscribed = await checkChannelSubscription(bot, telegramId, CHANNEL_USERNAME);
+          
+          if (isSubscribed) {
+            await ctx.reply(
+              '✅ *Отлично! Вы подписаны на канал.*\n\n' +
+              'Теперь вы можете пользоваться всеми функциями SendBuddy!',
+              {
+                parse_mode: 'Markdown',
+                reply_markup: {
+                  inline_keyboard: [
+                    [
+                      { text: '🏠 На главную', callback_data: 'start' }
+                    ]
+                  ]
+                }
+              }
+            );
+            // Перезапускаем команду start
+            await startCommand(ctx);
+          } else {
+            await ctx.reply(
+              '❌ *Вы еще не подписаны на канал.*\n\n' +
+              'Пожалуйста, подпишитесь на наш канал, чтобы продолжить:\n' +
+              `${CHANNEL_USERNAME}\n\n` +
+              'После подписки нажмите кнопку "✅ Я подписался" еще раз.',
+              {
+                parse_mode: 'Markdown',
+                reply_markup: {
+                  inline_keyboard: [
+                    [
+                      {
+                        text: '📢 Подписаться на канал',
+                        url: getChannelLink(CHANNEL_USERNAME)
+                      }
+                    ],
+                    [
+                      {
+                        text: '✅ Я подписался',
+                        callback_data: 'check_subscription'
+                      }
+                    ]
+                  ]
+                }
+              }
+            );
+          }
+        } catch (error) {
+          console.error('Check subscription error:', error);
+          await ctx.reply('❌ Ошибка при проверке подписки. Попробуйте позже.');
+        }
+      }
+      break;
+
     case 'faq':
       await ctx.reply(
         `❓ *Часто задаваемые вопросы*\n\n` +
