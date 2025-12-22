@@ -94,5 +94,5 @@ process.once('SIGTERM', () => bot.stop('SIGTERM'));
 
 startBot();
 
-export { bot, API_URL, MINI_APP_URL };
+export { bot, API_URL, MINI_APP_URL, CHANNEL_USERNAME, REQUIRE_CHANNEL_SUBSCRIPTION };
 
