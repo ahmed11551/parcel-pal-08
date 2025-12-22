@@ -8,6 +8,7 @@ import taskRoutes from './routes/tasks.js';
 import userRoutes from './routes/users.js';
 import uploadRoutes from './routes/upload.js';
 import telegramRoutes from './routes/telegram.js';
+import reportsRoutes from './routes/reports.js';
 import { logger, metrics } from './utils/logger.js';
 import { securityHeaders, sanitizeError } from './middleware/security.js';
 import { apiRateLimit } from './middleware/rateLimit.js';
