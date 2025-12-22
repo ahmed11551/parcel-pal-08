@@ -1,8 +1,7 @@
 import { Context } from 'telegraf';
-import { MINI_APP_URL, CHANNEL_USERNAME, REQUIRE_CHANNEL_SUBSCRIPTION } from '../index.js';
+import { MINI_APP_URL, CHANNEL_USERNAME, REQUIRE_CHANNEL_SUBSCRIPTION, bot } from '../index.js';
 import telegramAPI from '../utils/api.js';
 import { checkChannelSubscription, getChannelLink } from '../utils/channel.js';
-import { bot } from '../index.js';
 
 export const startCommand = async (ctx: Context) => {
   const telegramId = ctx.from?.id;
@@ -15,6 +14,42 @@ export const startCommand = async (ctx: Context) => {
     return;
   }
 
+  // Проверяем подписку на канал (если требуется)
+  if (REQUIRE_CHANNEL_SUBSCRIPTION && CHANNEL_USERNAME) {
+    const isSubscribed = await checkChannelSubscription(bot, telegramId, CHANNEL_USERNAME);
+    
+    if (!isSubscribed) {
+      await ctx.reply(
+        `📢 *Подпишитесь на наш канал!*\n\n` +
+        `Чтобы пользоваться всеми функциями SendBuddy, пожалуйста, подпишитесь на наш канал с новостями, акциями и полезной информацией.\n\n` +
+        `После подписки нажмите кнопку ниже для проверки.`,
+        {
+          parse_mode: 'Markdown',
+          reply_markup: {
+            inline_keyboard: [
+              [
+                {
+                  text: '📢 Подписаться на канал',
+                  url: getChannelLink(CHANNEL_USERNAME)
+                }
+              ],
+              [
+                {
+                  text: '✅ Я подписался',
+                  callback_data: 'check_subscription'
+                }
+              ],
+              [
+                { text: '❓ Помощь', callback_data: 'help' }
+              ]
+            ]
+          }
+        }
+      );
+      return;
+    }
+  }
+
   // Авторизуем пользователя автоматически
   try {
     const authResult = await telegramAPI.authSimple(
@@ -25,6 +60,10 @@ export const startCommand = async (ctx: Context) => {
     );
 
     if (authResult.success) {
+      const channelText = CHANNEL_USERNAME 
+        ? `\n📢 *Не забудьте подписаться на наш канал:* ${CHANNEL_USERNAME}\nТам новости, акции и полезная информация!\n\n`
+        : '\n';
+
       await ctx.reply(
         `✅ *Вы успешно авторизованы!*\n\n` +
         `👋 Привет, ${firstName}!\n\n` +
@@ -34,7 +73,7 @@ export const startCommand = async (ctx: Context) => {
         `• Помочь с вопросами\n` +
         `• Связать с поддержкой\n` +
         `• Оставить отзыв\n` +
-        `• Подписаться на уведомления\n\n` +
+        `• Подписаться на уведомления${channelText}` +
         `Используйте /help для списка команд.`,
         {
           parse_mode: 'Markdown',
@@ -53,7 +92,13 @@ export const startCommand = async (ctx: Context) => {
               [
                 { text: '⭐ Оставить отзыв', callback_data: 'review' },
                 { text: '🔔 Подписаться', callback_data: 'subscribe' }
-              ]
+              ],
+              ...(CHANNEL_USERNAME ? [[
+                {
+                  text: '📢 Наш канал',
+                  url: getChannelLink(CHANNEL_USERNAME)
+                }
+              ]] : [])
             ]
           }
         }
@@ -91,4 +136,3 @@ export const startCommand = async (ctx: Context) => {
     );
   }
 };
-

@@ -5,7 +5,6 @@ import { helpCommand } from './commands/help.js';
 import { supportCommand } from './commands/support.js';
 import { reviewsCommand } from './commands/reviews.js';
 import { statsCommand } from './commands/stats.js';
-import { statsCommand } from './commands/stats.js';
 import { messageHandler } from './handlers/messages.js';
 import { callbackHandler } from './handlers/callbacks.js';
 import { startNotificationService } from './services/notifications.js';
