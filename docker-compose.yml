@@ -109,6 +109,8 @@ services:
       API_URL: http://backend:3001/api
       ADMIN_TELEGRAM_IDS: ${ADMIN_TELEGRAM_IDS:-}
       MINI_APP_URL: ${FRONTEND_URL:-https://send-buddy.ru}
+      TELEGRAM_CHANNEL_USERNAME: ${TELEGRAM_CHANNEL_USERNAME:-@SendBuddyNews}
+      REQUIRE_CHANNEL_SUBSCRIPTION: ${REQUIRE_CHANNEL_SUBSCRIPTION:-false}
       # Для webhook режима (опционально)
       # TELEGRAM_WEBHOOK_URL: ${TELEGRAM_WEBHOOK_URL:-}
     depends_on:

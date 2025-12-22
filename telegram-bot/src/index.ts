@@ -15,6 +15,8 @@ dotenv.config();
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 const API_URL = process.env.API_URL || 'http://localhost:3001/api';
 const MINI_APP_URL = process.env.MINI_APP_URL || 'https://send-buddy.ru';
+const CHANNEL_USERNAME = process.env.TELEGRAM_CHANNEL_USERNAME || '@SendBuddyNews'; // Username канала
+const REQUIRE_CHANNEL_SUBSCRIPTION = process.env.REQUIRE_CHANNEL_SUBSCRIPTION === 'true'; // Требовать подписку на канал
 
 // Имя бота для логирования
 const BOT_NAME = 'SendBuddyExpress_Bot';

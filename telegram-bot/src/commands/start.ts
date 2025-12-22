@@ -1,6 +1,8 @@
 import { Context } from 'telegraf';
-import { MINI_APP_URL } from '../index.js';
+import { MINI_APP_URL, CHANNEL_USERNAME, REQUIRE_CHANNEL_SUBSCRIPTION } from '../index.js';
 import telegramAPI from '../utils/api.js';
+import { checkChannelSubscription, getChannelLink } from '../utils/channel.js';
+import { bot } from '../index.js';
 
 export const startCommand = async (ctx: Context) => {
   const telegramId = ctx.from?.id;
