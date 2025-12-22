@@ -1,88 +1,196 @@
-/**
- * Basic tests for authentication routes
- * 
- * To run tests:
- * npm install --save-dev jest @types/jest ts-jest
- * npm test
- */
+import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
+import request from 'supertest';
+import express from 'express';
+import authRoutes from './auth.js';
+import { pool } from '../db/index.js';
 
-// Note: This is a test structure file. 
-// For full implementation, install testing framework:
-// npm install --save-dev jest @types/jest ts-jest supertest @types/supertest
+// Mock database
+jest.mock('../db/index.js', () => ({
+  pool: {
+    query: jest.fn(),
+  },
+}));
+
+const app = express();
+app.use(express.json());
+app.use('/api/auth', authRoutes);
 
 describe('Auth Routes', () => {
-  describe('POST /register/send-code', () => {
-    it('should validate phone number format', () => {
-      // Test implementation
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
+
+  describe('POST /api/auth/register/send-code', () => {
+    it('should send SMS code for valid phone number', async () => {
+      const mockQuery = pool.query as jest.Mock;
+      
+      // Mock: user doesn't exist
+      mockQuery.mockResolvedValueOnce({ rows: [] });
+      
+      // Mock: insert SMS code
+      mockQuery.mockResolvedValueOnce({ rows: [{ id: 1 }] });
+
+      const response = await request(app)
+        .post('/api/auth/register/send-code')
+        .send({
+          name: 'Test User',
+          phone: '+79991234567',
+        });
+
+      expect(response.status).toBe(200);
+      expect(response.body).toHaveProperty('message');
+      expect(response.body.message).toContain('SMS code sent');
     });
 
-    it('should reject invalid phone numbers', () => {
-      // Test implementation
+    it('should reject invalid phone number', async () => {
+      const response = await request(app)
+        .post('/api/auth/register/send-code')
+        .send({
+          name: 'Test User',
+          phone: 'invalid',
+        });
+
+      expect(response.status).toBe(400);
+      expect(response.body).toHaveProperty('error');
     });
 
-    it('should reject existing phone numbers', () => {
-      // Test implementation
-    });
+    it('should reject missing name', async () => {
+      const response = await request(app)
+        .post('/api/auth/register/send-code')
+        .send({
+          phone: '+79991234567',
+        });
 
-    it('should send SMS code in mock mode', () => {
-      // Test implementation
+      expect(response.status).toBe(400);
     });
   });
 
-  describe('POST /register/verify', () => {
-    it('should reject invalid codes', () => {
-      // Test implementation
+  describe('POST /api/auth/register/verify', () => {
+    it('should register user with valid code', async () => {
+      const mockQuery = pool.query as jest.Mock;
+      
+      // Mock: SMS code exists and valid
+      mockQuery.mockResolvedValueOnce({
+        rows: [{
+          id: 1,
+          phone: '+79991234567',
+          code: '1234',
+          expires_at: new Date(Date.now() + 10 * 60 * 1000), // 10 minutes from now
+        }],
+      });
+      
+      // Mock: user doesn't exist
+      mockQuery.mockResolvedValueOnce({ rows: [] });
+      
+      // Mock: create user
+      mockQuery.mockResolvedValueOnce({
+        rows: [{
+          id: 1,
+          phone: '+79991234567',
+          name: 'Test User',
+        }],
+      });
+      
+      // Mock: delete SMS code
+      mockQuery.mockResolvedValueOnce({ rowCount: 1 });
+
+      const response = await request(app)
+        .post('/api/auth/register/verify')
+        .send({
+          phone: '+79991234567',
+          code: '1234',
+        });
+
+      expect(response.status).toBe(201);
+      expect(response.body).toHaveProperty('token');
+      expect(response.body).toHaveProperty('user');
     });
 
-    it('should reject expired codes', () => {
-      // Test implementation
+    it('should reject invalid code', async () => {
+      const mockQuery = pool.query as jest.Mock;
+      
+      // Mock: SMS code doesn't exist
+      mockQuery.mockResolvedValueOnce({ rows: [] });
+
+      const response = await request(app)
+        .post('/api/auth/register/verify')
+        .send({
+          phone: '+79991234567',
+          code: '9999',
+        });
+
+      expect(response.status).toBe(400);
+      expect(response.body).toHaveProperty('error');
     });
 
-    it('should create user with valid code', () => {
-      // Test implementation
-    });
+    it('should reject expired code', async () => {
+      const mockQuery = pool.query as jest.Mock;
+      
+      // Mock: SMS code expired
+      mockQuery.mockResolvedValueOnce({
+        rows: [{
+          id: 1,
+          phone: '+79991234567',
+          code: '1234',
+          expires_at: new Date(Date.now() - 1000), // Expired
+        }],
+      });
 
-    it('should return JWT token on success', () => {
-      // Test implementation
+      const response = await request(app)
+        .post('/api/auth/register/verify')
+        .send({
+          phone: '+79991234567',
+          code: '1234',
+        });
+
+      expect(response.status).toBe(400);
+      expect(response.body.error).toContain('expired');
     });
   });
 
-  describe('POST /login/send-code', () => {
-    it('should reject non-existent users', () => {
-      // Test implementation
+  describe('POST /api/auth/login/send-code', () => {
+    it('should send SMS code for existing user', async () => {
+      const mockQuery = pool.query as jest.Mock;
+      
+      // Mock: user exists
+      mockQuery.mockResolvedValueOnce({
+        rows: [{
+          id: 1,
+          phone: '+79991234567',
+        }],
+      });
+      
+      // Mock: insert SMS code
+      mockQuery.mockResolvedValueOnce({ rows: [{ id: 1 }] });
+
+      const response = await request(app)
+        .post('/api/auth/login/send-code')
+        .send({
+          phone: '+79991234567',
+        });
+
+      expect(response.status).toBe(200);
+      expect(response.body).toHaveProperty('message');
     });
 
-    it('should send code to existing user', () => {
-      // Test implementation
-    });
-  });
+    it('should reject non-existent user', async () => {
+      const mockQuery = pool.query as jest.Mock;
+      
+      // Mock: user doesn't exist
+      mockQuery.mockResolvedValueOnce({ rows: [] });
 
-  describe('POST /login/verify', () => {
-    it('should reject invalid codes', () => {
-      // Test implementation
-    });
+      const response = await request(app)
+        .post('/api/auth/login/send-code')
+        .send({
+          phone: '+79991234567',
+        });
 
-    it('should return JWT token on success', () => {
-      // Test implementation
+      expect(response.status).toBe(404);
+      expect(response.body).toHaveProperty('error');
     });
   });
 });
-
-describe('JWT Authentication', () => {
-  it('should reject requests without token', () => {
-    // Test implementation
-  });
-
-  it('should reject invalid tokens', () => {
-    // Test implementation
-  });
-
-  it('should reject expired tokens', () => {
-    // Test implementation
-  });
-
-  it('should accept valid tokens', () => {
-    // Test implementation
-  });
-});
-

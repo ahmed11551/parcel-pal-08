@@ -10,6 +10,7 @@ import uploadRoutes from './routes/upload.js';
 import telegramRoutes from './routes/telegram.js';
 import { logger, metrics } from './utils/logger.js';
 import { securityHeaders, sanitizeError } from './middleware/security.js';
+import { apiRateLimit } from './middleware/rateLimit.js';
 
 dotenv.config();
 
@@ -60,6 +61,9 @@ app.use(pinoHttp({
     return 'info';
   },
 }));
+
+// Rate limiting для всех API endpoints (кроме тех, что уже имеют свой rate limit)
+app.use('/api', apiRateLimit);
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));

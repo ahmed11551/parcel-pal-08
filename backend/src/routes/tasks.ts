@@ -1,6 +1,7 @@
 import express from 'express';
 import { pool } from '../db/index.js';
 import { authenticateToken, optionalAuth, AuthRequest } from '../middleware/auth.js';
+import { createTaskRateLimit, messageRateLimit } from '../middleware/rateLimit.js';
 import { z } from 'zod';
 import * as notifications from '../services/telegram-notifications.js';
 import { logger, metrics } from '../utils/logger.js';
@@ -216,8 +217,8 @@ router.get('/:id', optionalAuth, async (req: AuthRequest, res) => {
   }
 });
 
-// Create task
-router.post('/', authenticateToken, async (req: AuthRequest, res) => {
+// Create task (с rate limiting)
+router.post('/', authenticateToken, createTaskRateLimit, async (req: AuthRequest, res) => {
   const client = await pool.connect();
   try {
     await client.query('BEGIN');

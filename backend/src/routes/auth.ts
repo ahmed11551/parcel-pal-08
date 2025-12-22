@@ -6,11 +6,12 @@ import bcrypt from 'bcryptjs';
 import { authenticateToken, AuthRequest } from '../middleware/auth.js';
 import { z } from 'zod';
 import rateLimit from 'express-rate-limit';
+import { authRateLimit } from '../middleware/rateLimit.js';
 import { logger } from '../utils/logger.js';
 
 const router = express.Router();
 
-// Rate limiting для защиты от спама SMS
+// Rate limiting для защиты от спама SMS (более строгий чем общий)
 const smsRateLimit = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 минут
   max: 3, // максимум 3 запроса на отправку SMS
