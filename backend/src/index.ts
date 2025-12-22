@@ -83,12 +83,15 @@ app.use('/api/upload', uploadRoutes);
 app.use('/api/telegram', telegramRoutes);
 app.use('/api/reports', reportsRoutes);
 
-// Health check with database connectivity
+// Health check with database connectivity (для мониторинга)
 app.get('/api/health', async (req, res) => {
   try {
+    const startTime = Date.now();
+    
     // Проверка подключения к базе данных
     const dbCheck = await pool.query('SELECT 1 as health');
     const dbHealthy = dbCheck.rows.length > 0;
+    const dbLatency = Date.now() - startTime;
     
     // Проверка обязательных переменных окружения
     const envCheck = {
@@ -97,21 +100,32 @@ app.get('/api/health', async (req, res) => {
       telegramBotToken: !!process.env.TELEGRAM_BOT_TOKEN,
     };
     
+    // Проверка доступности сервисов
+    const services = {
+      database: {
+        status: dbHealthy ? 'ok' : 'error',
+        latency: dbLatency,
+      },
+      environment: envCheck,
+    };
+    
     const allHealthy = dbHealthy && envCheck.jwtSecret && envCheck.databaseUrl;
     
-    res.status(allHealthy ? 200 : 503).json({
+    const response = {
       status: allHealthy ? 'ok' : 'degraded',
       timestamp: new Date().toISOString(),
-      checks: {
-        database: dbHealthy ? 'ok' : 'error',
-        environment: envCheck,
-      },
-    });
+      uptime: process.uptime(),
+      version: process.env.npm_package_version || '1.0.0',
+      checks: services,
+    };
+    
+    res.status(allHealthy ? 200 : 503).json(response);
   } catch (error) {
     logger.error({ err: error }, 'Health check failed');
     res.status(503).json({
       status: 'error',
       timestamp: new Date().toISOString(),
+      uptime: process.uptime(),
       error: 'Health check failed',
     });
   }
