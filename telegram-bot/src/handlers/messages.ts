@@ -1,6 +1,8 @@
 import { Context } from 'telegraf';
 import telegramAPI from '../utils/api.js';
 import axios from 'axios';
+import { handlePostMessage } from '../commands/post.js';
+import { postingStates } from '../commands/post.js';
 
 const API_URL = process.env.API_URL || 'http://localhost:3001/api';
 
@@ -16,6 +18,12 @@ export const messageHandler = async (ctx: Context) => {
   const userId = ctx.from?.id;
 
   if (!userId || !text) return;
+
+  // Проверяем состояние публикации в канал (приоритет)
+  if (postingStates.has(userId)) {
+    await handlePostMessage(ctx);
+    return; // Не обрабатываем дальше если это сообщение для поста
+  }
 
   // Проверяем состояние пользователя
   const state = userStates.get(userId);
