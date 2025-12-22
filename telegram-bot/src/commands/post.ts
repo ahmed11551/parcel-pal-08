@@ -3,7 +3,8 @@ import { CHANNEL_USERNAME, bot } from '../index.js';
 import { publishToChannel } from '../utils/channel.js';
 
 // Хранилище состояний для постинга (в production использовать Redis)
-const postingStates = new Map<number, 'waiting_message' | 'waiting_confirm'>();
+export const postingStates = new Map<number, 'waiting_message' | 'waiting_confirm'>();
+const pendingPosts = new Map<number, string>();
 
 export const postCommand = async (ctx: Context) => {
   const telegramId = ctx.from?.id;
