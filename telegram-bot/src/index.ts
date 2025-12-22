@@ -6,6 +6,7 @@ import { supportCommand } from './commands/support.js';
 import { reviewsCommand } from './commands/reviews.js';
 import { statsCommand } from './commands/stats.js';
 import { postCommand, handlePostMessage, confirmPost, cancelPost } from './commands/post.js';
+import { testNotificationCommand } from './commands/test_notification.js';
 import { messageHandler } from './handlers/messages.js';
 import { callbackHandler } from './handlers/callbacks.js';
 import { startNotificationService } from './services/notifications.js';
@@ -40,6 +41,7 @@ bot.command('support', supportCommand);
 bot.command('reviews', reviewsCommand);
 bot.command('stats', statsCommand);
 bot.command('post', postCommand);
+bot.command('test_notification', testNotificationCommand);
 bot.command('cancel', async (ctx) => {
   const telegramId = ctx.from?.id;
   if (telegramId) {

@@ -89,6 +89,14 @@ export const telegramAPI = {
     const response = await api.get('/telegram/subscribers?stats=true');
     return response.data;
   },
+
+  // Создать тестовое уведомление
+  async createTestNotification(telegramId: number) {
+    const response = await api.post('/telegram/test-notification', {
+      telegramId,
+    });
+    return response.data;
+  },
 };
 
 export default telegramAPI;
