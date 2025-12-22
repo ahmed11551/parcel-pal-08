@@ -69,3 +69,79 @@ export function getChannelLink(channelIdentifier: string): string {
   return `https://t.me/${username}`;
 }
 
+/**
+ * Публикует сообщение в канал
+ * @param bot - Экземпляр бота
+ * @param channelIdentifier - Username канала (@SendBuddyNews) или chat_id
+ * @param message - Текст сообщения
+ * @param options - Дополнительные опции (parse_mode, reply_markup и т.д.)
+ * @returns ID отправленного сообщения
+ */
+export async function publishToChannel(
+  bot: Telegraf,
+  channelIdentifier: string,
+  message: string,
+  options?: {
+    parse_mode?: 'HTML' | 'Markdown' | 'MarkdownV2';
+    reply_markup?: any;
+    disable_web_page_preview?: boolean;
+  }
+): Promise<number> {
+  try {
+    let channelId = channelIdentifier;
+    
+    // Если это username, добавляем @ если нужно
+    if (!channelIdentifier.startsWith('+') && !channelIdentifier.startsWith('-') && !channelIdentifier.startsWith('http')) {
+      channelId = channelIdentifier.startsWith('@') 
+        ? channelIdentifier 
+        : `@${channelIdentifier}`;
+    }
+
+    const result = await bot.telegram.sendMessage(channelId, message, {
+      parse_mode: options?.parse_mode || 'Markdown',
+      reply_markup: options?.reply_markup,
+      disable_web_page_preview: options?.disable_web_page_preview,
+    });
+
+    return result.message_id;
+  } catch (error: any) {
+    console.error('Error publishing to channel:', error);
+    throw new Error(`Failed to publish to channel: ${error.message}`);
+  }
+}
+
+/**
+ * Публикует фото в канал
+ * @param bot - Экземпляр бота
+ * @param channelIdentifier - Username канала (@SendBuddyNews)
+ * @param photo - URL или путь к фото
+ * @param caption - Подпись к фото
+ * @returns ID отправленного сообщения
+ */
+export async function publishPhotoToChannel(
+  bot: Telegraf,
+  channelIdentifier: string,
+  photo: string,
+  caption?: string
+): Promise<number> {
+  try {
+    let channelId = channelIdentifier;
+    
+    if (!channelIdentifier.startsWith('+') && !channelIdentifier.startsWith('-') && !channelIdentifier.startsWith('http')) {
+      channelId = channelIdentifier.startsWith('@') 
+        ? channelIdentifier 
+        : `@${channelIdentifier}`;
+    }
+
+    const result = await bot.telegram.sendPhoto(channelId, photo, {
+      caption,
+      parse_mode: 'Markdown',
+    });
+
+    return result.message_id;
+  } catch (error: any) {
+    console.error('Error publishing photo to channel:', error);
+    throw new Error(`Failed to publish photo to channel: ${error.message}`);
+  }
+}
+

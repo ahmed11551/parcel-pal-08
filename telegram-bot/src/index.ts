@@ -5,6 +5,7 @@ import { helpCommand } from './commands/help.js';
 import { supportCommand } from './commands/support.js';
 import { reviewsCommand } from './commands/reviews.js';
 import { statsCommand } from './commands/stats.js';
+import { postCommand, handlePostMessage, confirmPost, cancelPost } from './commands/post.js';
 import { messageHandler } from './handlers/messages.js';
 import { callbackHandler } from './handlers/callbacks.js';
 import { startNotificationService } from './services/notifications.js';
@@ -38,6 +39,13 @@ bot.command('help', helpCommand);
 bot.command('support', supportCommand);
 bot.command('reviews', reviewsCommand);
 bot.command('stats', statsCommand);
+bot.command('post', postCommand);
+bot.command('cancel', async (ctx) => {
+  const telegramId = ctx.from?.id;
+  if (telegramId) {
+    await cancelPost(ctx);
+  }
+});
 bot.command('tasks', (ctx) => {
   ctx.reply('📦 Открываю задания...', {
     reply_markup: {

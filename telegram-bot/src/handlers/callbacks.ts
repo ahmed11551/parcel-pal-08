@@ -6,6 +6,7 @@ import { reviewsCommand } from '../commands/reviews.js';
 import telegramAPI from '../utils/api.js';
 import { MINI_APP_URL, CHANNEL_USERNAME, REQUIRE_CHANNEL_SUBSCRIPTION, bot } from '../index.js';
 import { checkChannelSubscription, getChannelLink } from '../utils/channel.js';
+import { confirmPost, cancelPost } from '../commands/post.js';
 
 // Хранилище состояний пользователей (в production использовать Redis)
 const userStates = new Map<number, 'support' | 'review' | null>();
